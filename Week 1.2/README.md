@@ -88,11 +88,13 @@ for (let i = 0; i < 100000; i++) {
     ✅ Runs only after the loop (i.e., the call stack) finishes.
 
 ### Expected Output
-  value of i is 0
-  value of i is 1
-  ...
-  value of i is 99999
-  1 second happened, hello world
+ ```text
+value of i is 0
+value of i is 1
+...
+value of i is 99999
+1 second happened, hello world
+```
 
 ### Why this happens ?
 - JavaScript is single-threaded.
@@ -100,5 +102,4 @@ for (let i = 0; i < 100000; i++) {
 - So, setTimeout runs only after synchronous code (the loop) completes, even if the delay has technically passed.
 
 ----------------------------------------
-
 
