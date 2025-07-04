@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from "axios";
+import { useAuth } from "../context/AuthContext"; // add this at the top
+
 
 const SignIn = () => {
-
+  
+  const { login } = useAuth(); // inside SignIn component
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -20,27 +23,35 @@ const SignIn = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-      e.preventDefault();
-      let response;
-      let tokenWithBearer;
-      console.log("hello");
-      try{
-          response = await axios.post("http://localhost:4000/api/v1/user/signin",formData);
-          console.log("signin response is ", response);
-          toast.success("Signin Successfull");
-          tokenWithBearer = `Bearer ${response.data.token}`;
-          localStorage.setItem("token",tokenWithBearer);
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 500);
-          
-        }
-        catch(err){
+const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+        const response = await axios.post(
+          "http://localhost:4000/api/v1/user/signin",
+          JSON.stringify(formData),
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+      );
+
+        const tokenWithBearer = `Bearer ${response.data.token}`; // ✅ ADD THIS LINE
+
+        toast.success("Signin Successful");
+
+        login(tokenWithBearer); // ✅ now this has a valid value
+        navigate("/dashboard");
+    }
+    catch (err) {
         console.log("signin err is ", err);
-        toast.error(err.response.data.message);
-      }
-  };
+        toast.error(err?.response?.data?.message || "Signin failed");
+    }
+};
+
+
+
 
   return (
     <div className='bg-gradient-to-r from-blue-500 to-purple-500 min-h-screen flex justify-center items-center'>

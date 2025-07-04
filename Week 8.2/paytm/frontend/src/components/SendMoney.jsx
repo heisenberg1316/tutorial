@@ -23,6 +23,7 @@ function SendMoney() {
       amount : amount,
       to : id
     }
+    data.amount = parseInt(data.amount);
     if(amount==0){
       toast.warning("Amount is 0");
       return;
