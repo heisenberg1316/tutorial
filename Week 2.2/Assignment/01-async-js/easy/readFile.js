@@ -40,3 +40,26 @@ async function expensiveOperation(){
 expensiveOperation();
 
 console.log("Expensive operation done. Total is:", total);
+
+
+/* Output :->
+        Start reading file...
+        Now doing an expensive operation...
+        reached till 10000
+        now doing fetch call
+        Expensive operation done. Total is: 10000
+        inside readfile
+        File content: hello ji
+        data is fetched
+        data is processed completely
+        result is  {
+            userId: 1,
+            id: 1,
+            title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+            body: 'quia et suscipit\n' +
+                'suscipit recusandae consequuntur expedita et cum\n' +
+                'reprehenderit molestiae ut ut quas totam\n' +
+                'nostrum rerum est autem sunt rem eveniet architecto'
+        }
+        loop is over
+*/

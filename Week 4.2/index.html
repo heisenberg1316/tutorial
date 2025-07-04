@@ -1,0 +1,59 @@
+<html>
+    
+    <script>
+        function remove(buttonElement){
+            const parentDiv = buttonElement.parentElement;
+            parentDiv.remove();
+        }
+        function execute(event){
+            const buttonElement = event.target;
+            console.log("here");
+            console.log(buttonElement);
+            buttonElement.innerHTML = "Done";
+            setTimeout(() => remove(buttonElement), 500);
+        }
+        function addTodo(){
+            const title = document.getElementById("title");
+            const description = document.getElementById("description");
+            const container = document.getElementById("container");
+
+            // Create parent div
+            const parentDiv = document.createElement("div");
+
+            // Create child title div
+            const childDivTitle = document.createElement("div");
+            childDivTitle.innerHTML = title.value;
+
+            // Create child description div
+            const childDivDesc = document.createElement("div");
+            childDivDesc.innerHTML = description.value;
+
+            // Create button
+            const button = document.createElement("button");
+            button.innerHTML = "Mark as done";
+            button.onclick = execute;
+
+            // Append children to parent
+            parentDiv.appendChild(childDivTitle);
+            parentDiv.appendChild(childDivDesc);
+            parentDiv.appendChild(button);
+            parentDiv.style.marginBottom = "10px";
+
+            // Append parent to container
+            container.appendChild(parentDiv);
+        }
+    </script>
+    <body>
+        <div>
+            <input id="title" type="text" placeholder="title"></input>
+            <br>
+            <input id="description" type="text" placeholder="description"></input>
+            <br>
+            <br>
+            <button onclick="addTodo()">Add todo</button>
+            <h3>All Todo's</h3>
+            <div id="container">
+            </div>
+        </div>
+    </body>
+</html>
