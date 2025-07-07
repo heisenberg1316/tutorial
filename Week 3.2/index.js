@@ -4,14 +4,14 @@ const mongoose = require("mongoose");
 const app = express();
 app.use(express.json());
 
-mongoose.connect("mongodb+srv://rawatmukul5000:MUKUL2003@cluster0.t64updt.mongodb.net/week3");
+mongoose.connect("DB_URL");
 
 // Define Mongoose schema and model
 const User = mongoose.model("User", {
     name: String,
     email: String,
     password: String,
-});
+})
 
 // Signup endpoint
 app.post("/signup", async (req, res) => {
