@@ -1,5 +1,7 @@
 node_modules/
 .env
 .npm/
+aws/
 Assignments/
 dist/
+wrangler.jsonc
