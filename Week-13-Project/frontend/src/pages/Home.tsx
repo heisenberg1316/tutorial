@@ -1,7 +1,31 @@
+import axios from "axios";
+import { useAuth } from "../context/AuthContext"
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Home = () => {
+
+  const {logout} = useAuth();
+  const {isLoggedIn} = useAuth();
+  const navigate = useNavigate();
+
+  
+  useEffect(() => {
+    if(isLoggedIn==false) navigate("/signin");
+
+  }, [])
+
+  const logoutFull = async () => {
+      await axios.get("http://localhost:8787/api/v1/user/logout", {withCredentials : true});
+      logout();
+      navigate("/signin");
+  }
+
   return (
-    <div>Home</div>
+    <div>
+      <div>Home</div>
+      <button onClick={logoutFull}>Logout</button>
+    </div>
   )
 }
 

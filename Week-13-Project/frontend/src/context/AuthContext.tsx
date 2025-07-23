@@ -6,10 +6,12 @@ type AuthContextType = {
   isLoggedIn: boolean;
   login: () => void;
   logout: () => void;
+  loading : boolean;
 };
 
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+console.log("auth context re-render");
 
 // Provider
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -21,30 +23,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // ✅ Fetch /me on app mount
     useEffect(() => {
-
-    const fetchUser = async () => {
+      const fetchUser = async () => {
         try {
+            setLoading(true);
             await api.get("/api/v1/user/me");
             setIsLoggedIn(true);
         }
         catch {
             setIsLoggedIn(false);
         }
-        finally{
+        finally {
             setLoading(false);
         }
       };
 
       fetchUser();
-
-    
     }, []);
 
   // Optionally block render until auth is checked
-  if (loading) return <div>Loading...</div>;
+  // if (loading) return <div>Loading...</div>;
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

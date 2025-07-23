@@ -11,7 +11,6 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-
         if (error.response?.status === 401 && !originalRequest._retry) { // prevent infinite loop
             originalRequest._retry = true;
 
@@ -23,12 +22,8 @@ api.interceptors.response.use(
                 return api(originalRequest);
             }
             catch (refreshErr) {
-                // 👇 If refresh fails, redirect to login
-                window.location.href = "/signin";
+                // 👇 If refresh fails
                 return Promise.reject(refreshErr);
-            }
-            finally{
-
             }
         }
 

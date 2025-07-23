@@ -4,7 +4,7 @@ import { sign, verify } from "hono/jwt";
 import Env from "../types/env";
 import { signupInput, signinInput } from "@mukul1316/common";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { treeifyError } from "zod";
+import { success, treeifyError } from "zod";
 
 const userRouter = new Hono<Env>();
 
@@ -42,12 +42,17 @@ userRouter.post("/refresh-token", async (c) => {
 
 // GET /me
 userRouter.get("/me", async (c) => {
-  const token = getCookie(c, "accessToken");
-  if (!token)
+  const token1 = getCookie(c, "accessToken");
+  const token2 = getCookie(c, "refreshToken");
+
+  if(!token2)
+    return c.json({success : false, error : "Not authenticated"}, 403);
+
+  if (!token1)
     return c.json({ success: false, error: "Not authenticated" }, 401);
 
   try {
-    const decoded = await verify(token, c.env.JWT_SECRET) as { userId: string };
+    const decoded = await verify(token1, c.env.JWT_SECRET) as { userId: string };
     const prisma = getPrisma(c);
 
     const user = await prisma.user.findUnique({
@@ -168,7 +173,7 @@ userRouter.post("/signin", async (c) => {
 });
 
 // POST /logout
-userRouter.post("/logout", async (c) => {
+userRouter.get("/logout", async (c) => {
   deleteCookie(c, "accessToken");
   deleteCookie(c, "refreshToken");
   return c.json({ success: true, message: "Logged out successfully" });

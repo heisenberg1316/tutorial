@@ -10,6 +10,8 @@ const App = lazy(() => import('./App'));
 const Home = lazy(() => import('./pages/Home'));
 
 import { AuthProvider } from './context/AuthContext';
+import { PublicRoute } from './components/PublicRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
     {
@@ -18,15 +20,27 @@ const router = createBrowserRouter([
     },
     {
       path: "/signup",
-      element: <Signup />,
+      element: (
+          <PublicRoute>
+            <Signup />
+          </PublicRoute>
+        ),
     },
     {
       path: "/signin",
-      element: <Signin />,
+        element: (
+            <PublicRoute>
+              <Signin />
+            </PublicRoute>
+        ),
     },
     {
       path: "/home",
-      element: <Home />,
+      element: (
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        ),
       children: [
         {
           path: "blog/:id", 
