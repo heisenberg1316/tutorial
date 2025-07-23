@@ -12,6 +12,7 @@ const Home = lazy(() => import('./pages/Home'));
 import { AuthProvider } from './context/AuthContext';
 import { PublicRoute } from './components/PublicRoute';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import NotFound from './pages/NotFound';
 
 const router = createBrowserRouter([
     {
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
           element: <Blog />
         }
       ]
+    },
+     {
+      path: "*", // This will match all undefined routes
+      element: <NotFound />,
     },
 ]);
 

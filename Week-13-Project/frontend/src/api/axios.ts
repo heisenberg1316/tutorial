@@ -13,7 +13,6 @@ api.interceptors.response.use(
         const originalRequest = error.config;
         if (error.response?.status === 401 && !originalRequest._retry) { // prevent infinite loop
             originalRequest._retry = true;
-
             try {
                 // 👇 Hit refresh route
                 await api.post("/api/v1/user/refresh-token");

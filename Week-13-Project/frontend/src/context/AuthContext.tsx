@@ -11,7 +11,6 @@ type AuthContextType = {
 
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-console.log("auth context re-render");
 
 // Provider
 export function AuthProvider({ children }: { children: React.ReactNode }) {
