@@ -15,7 +15,8 @@ generator client_edge {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("ACCELERATE_URL")
+  
 }
    
 model User {
@@ -23,10 +24,10 @@ model User {
   email     String @unique
   name      String
   password  String
-  posts     Post[]
+  blogs     Blog[]
 }
 
-model Post {
+model Blog {
   id        String  @id @default(uuid())
   title     String
   content   String
