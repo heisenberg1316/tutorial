@@ -21,19 +21,9 @@ const Signin = () => {
       
       try {
           const result = await api.post("/api/v1/user/signin", signinData);          
-          
-          // ✅ call /me to confirm login & get user
-          // const res = await api.get("/api/v1/user/me");
-
-
-          // if (res.data) {
           login(); // sets isLoggedIn: true in context
           navigate("/home"); // redirect to home
           alert("signin successfull");
-          // }
-          // else {
-          //     alert("Signin failed. Try again.");
-          // }
       }
       catch (err: any) {
             console.log(err);
