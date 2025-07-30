@@ -55,9 +55,9 @@ const Signup = () => {
     };
 
     return (
-        <div className="flex">
-            <div className="flex-1 lg:flex-[0.5] min-h-screen flex items-center justify-center">
-                <div className="flex flex-col gap-4 w-[80%] lg:w-[55%] xl:w-[45%]">
+        <div className="flex flex-1">
+            <div className="flex-1 lg:flex-[0.5] flex items-center justify-center">
+                <div className="flex flex-col gap-3 w-[80%] lg:w-[55%] xl:w-[45%]">
                     <div className="text-center">
                         <h1 className="text-3xl font-bold">Create an account</h1>
                         <p className="text-gray-400 font-semibold">
@@ -67,7 +67,7 @@ const Signup = () => {
                             </Link>
                         </p>
                     </div>
-                    <form className="space-y-4" onSubmit={onSubmit}>
+                    <form className="space-y-3" onSubmit={onSubmit}>
                         <div className="flex flex-col gap-1">
                             <label htmlFor="name" className="font-semibold">Name</label>
                             <input
@@ -76,7 +76,7 @@ const Signup = () => {
                                 onChange={(e) => setName(e.target.value)}
                                 id="name"
                                 type="text"
-                                placeholder="Enter your name"
+                                placeholder="Enter your full name"
                                 className="bg-gray-100 px-2 py-3 rounded-lg border-1"
                             />
                         </div>
@@ -115,7 +115,7 @@ const Signup = () => {
                                 )}
                             </button>
                         </div>
-                        <div className="mt-8">
+                        <div className="mt-6">
                             <button
                                 disabled={loading}
                                 className="bg-white text-black w-full px-2 py-3 rounded-lg hover:bg-black hover:text-white border-1"

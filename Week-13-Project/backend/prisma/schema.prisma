@@ -18,7 +18,8 @@ datasource db {
   url      = env("ACCELERATE_URL")
   
 }
-   
+
+//upvote adding remaining
 model User {
   id        String @id @default(uuid())
   email     String @unique
@@ -32,6 +33,16 @@ model Blog {
   title     String
   content   String
   published Boolean @default(false)
+  upvotes   Int      @default(0)         // new field for upvotes
   author    User @relation(fields : [authorId], references: [id])
   authorId  String
+  tags      Tag[]    @relation("BlogTags") // ✅ connect to many tags
+  createdAt DateTime @default(now())
+  imageLink String
+}
+
+model Tag {
+  id    String  @id @default(uuid())    // unique ID
+  name  String  @unique                 // tag name like 'cricket', 'coding'
+  blogs Blog[]  @relation("BlogTags")   // link to many blogs
 }

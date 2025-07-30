@@ -11,52 +11,53 @@ const Signin = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const { login } = useAuth(); // ✅ context
+    const { login, setUser } = useAuth(); // ✅ context
     const navigate = useNavigate();
 
     const onSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       const signinData: SigninInput = { email, password };
-      setLoading(true);
       
       try {
-          const result = await api.post("/api/v1/user/signin", signinData);          
+          setLoading(true);
+          const result = await api.post("/api/v1/user/signin", signinData);    
+          setUser(result.data.data);
           login(); // sets isLoggedIn: true in context
-          navigate("/home"); // redirect to home
+          navigate("/blogs"); // redirect to home
           alert("signin successfull");
       }
       catch (err: any) {
-            console.log(err);
+        console.log(err);
             const backendError = err.response?.data?.error;
             if (typeof backendError === "string" && backendError.length > 0) {
                 alert(backendError);
                 return;
-            }
-
-            const zodErrors = err.response?.data?.error?.properties;
-            console.log("zod is ",zodErrors);
-            if (zodErrors) {
+              }
+              
+              const zodErrors = err.response?.data?.error?.properties;
+              console.log("zod is ",zodErrors);
+              if (zodErrors) {
                 const allMessages = Object.entries(zodErrors)
-                    .map(([fieldName, info]: [string, any]) => {
-                        const msg = info.errors?.[0] || "Invalid";
-                        return `${fieldName[0].toUpperCase() + fieldName.slice(1)}: ${msg}`;
-                    })
-                    .join("\n");
-
+                .map(([fieldName, info]: [string, any]) => {
+                  const msg = info.errors?.[0] || "Invalid";
+                  return `${fieldName[0].toUpperCase() + fieldName.slice(1)}: ${msg}`;
+                })
+                .join("\n");
+                
                 alert(allMessages);
-            }
-            else {
+              }
+              else {
                 alert("Signin failed");
-            }
-      }
-      finally {
-          setLoading(false);
-      }
+              }
+        }
+        finally {
+              setLoading(false);
+        } 
 };
 
   return (
-    <div className="flex">
-      <div className="flex-1 lg:flex-[0.5] min-h-screen flex items-center justify-center">
+    <div className="flex flex-1">
+      <div className="flex-1 lg:flex-[0.5] flex items-center justify-center">
         <div className="flex flex-col gap-4 w-[80%] lg:w-[55%] xl:w-[45%]">
           <div className="text-center">
             <h1 className="text-3xl font-bold">Already have an account</h1>
