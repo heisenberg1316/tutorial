@@ -1,25 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-
-const getInitials = (name: string) => {
-  const words = name.trim().split(' ');
-  if (words.length === 1) return words[0][0].toUpperCase();
-  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-};
+import { useQueryClient } from '@tanstack/react-query';
 
 const Avatar = () => {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const toggleDropdown = () => setOpen((prev) => !prev);
 
   const logOutFull = async () => {
       await logout();
+      queryClient.clear();
       navigate("/signin");
-      alert("Logout successfull");
   }
 
   // Close dropdown on outside click
@@ -35,29 +31,44 @@ const Avatar = () => {
 
   if (!user?.name) return null;
 
-  const initials = getInitials(user.name);
 
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Avatar button */}
       <button
         onClick={toggleDropdown}
-        className="w-10 h-10 rounded-full  cursor-pointer bg-blue-600 text-white flex items-center justify-center font-bold text-lg"
-        title={user.name}
+        className="w-10 h-10 rounded-full overflow-hidden cursor-pointer"
       >
-        {initials}
+        <img
+          src={user.imageLink}
+          alt="User avatar"
+          className="w-full h-full object-cover"
+        />
       </button>
+
 
       {/* Dropdown menu */}
       {open && (
-        <div className="absolute right-0 mt-2 w-36 bg-white border shadow-lg rounded-md z-50">
-          <div className="flex items-center justify-between px-3 py-2 border-b">
+        <div className="absolute flex flex-col right-0 mt-2 w-36 bg-white border shadow-lg rounded-md z-50">
+          <div onClick={() => {setOpen(false)}} className="flex group hover:bg-gray-100  hover:cursor-pointer items-center justify-between px-3 py-2 border-b">
             <span className="text-sm font-semibold">Close</span>
-            <button onClick={() => setOpen(false)} className="text-gray-500 cursor-pointer hover:text-red-500 hover:font-extrabold text-sm">✕</button>
+            <button className="text-gray-500 cursor-pointer text-sm group-hover:font-extrabold group-hover:text-red-500">✕</button>
+          </div>
+          <div onClick={() => {
+            setOpen(false);
+            navigate("/my-profile");
+          }} className='px-3 py-2 text-sm font-semibold border-b hover:bg-gray-100 hover:cursor-pointer'>
+            My profile
+          </div>
+           <div onClick={() => {
+            setOpen(false);
+            navigate("/blogs");
+          }} className='px-3 py-2 text-sm font-semibold border-b hover:bg-gray-100 hover:cursor-pointer'>
+            Blogs
           </div>
           <button
             onClick={logOutFull}
-            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            className="w-full font-semibold text-left px-3 py-2 text-sm hover:bg-gray-100 hover:cursor-pointer"
           >
             Logout
           </button>

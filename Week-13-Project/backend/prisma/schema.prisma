@@ -19,14 +19,32 @@ datasource db {
   
 }
 
-//upvote adding remaining
 model User {
-  id        String @id @default(uuid())
-  email     String @unique
-  name      String
-  password  String
-  blogs     Blog[]
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String
+  bio             String
+  password        String
+  blogs           Blog[]   // blogs written by user
+  imageLink       String
+  updatedCount    Int      @default(0)
+  lastUpdateDate  DateTime?
+  createdAt       DateTime @default(now())
+  
+  // Upvotes relation
+  upvotedBlogs    Blog[]   @relation("Upvotes")
+
+  // Followers/following
+  followers       Follower[] @relation("FollowedUser")
+  following       Follower[] @relation("FollowingUser")
+
+  // Profile views relations
+  profileViewers  ProfileView[] @relation("ViewedUserRelation") // people who viewed this user
+  profilesViewed  ProfileView[] @relation("ViewerRelation")     // profiles this user viewed
+
+  profileViews    Int      @default(0) // total views count
 }
+
 
 model Blog {
   id        String  @id @default(uuid())
@@ -38,11 +56,37 @@ model Blog {
   authorId  String
   tags      Tag[]    @relation("BlogTags") // ✅ connect to many tags
   createdAt DateTime @default(now())
-  imageLink String
+  imageLink String @default("https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png?20210521171500")
+  upvotedBy User[]  @relation("Upvotes")
 }
+
 
 model Tag {
   id    String  @id @default(uuid())    // unique ID
   name  String  @unique                 // tag name like 'cricket', 'coding'
   blogs Blog[]  @relation("BlogTags")   // link to many blogs
+}
+
+model Follower {
+  id            String   @id @default(uuid())
+  follower      User     @relation("FollowingUser", fields: [followerId], references: [id])
+  followerId    String
+  followed      User     @relation("FollowedUser", fields: [followedId], references: [id])
+  followedId    String
+  createdAt     DateTime @default(now())
+
+  @@unique([followerId, followedId]) // prevent duplicate follows
+}
+
+
+model ProfileView {
+  id           String   @id @default(uuid())
+
+  viewer       User     @relation("ViewerRelation", fields: [viewerId], references: [id])
+  viewerId     String
+
+  viewedUser   User     @relation("ViewedUserRelation", fields: [viewedUserId], references: [id])
+  viewedUserId String
+
+  viewedAt     DateTime @default(now())
 }

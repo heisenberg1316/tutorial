@@ -97,7 +97,7 @@ export default function Stickybar() {
           </div>
 
           <div className="mb-1">
-            <label className="block text-gray-700 text-sm mb-1">Custom Tags</label>
+            <label className="block text-gray-700 text-sm mb-2 mt-5">Custom Tags</label>
             <input
               type="text"
               placeholder="Add custom tags, separated by commas"
@@ -113,13 +113,13 @@ export default function Stickybar() {
       <div className="flex gap-3">
         <button
           onClick={applyFilters}
-          className="flex-1 py-2 bg-black text-white rounded-lg hover:opacity-90 transition"
+          className="flex-1 py-2 bg-black text-white rounded-lg hover:opacity-70 transition cursor-pointer"
         >
           Apply
         </button>
         <button
           onClick={clearFilters}
-          className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition cursor-pointer"
         >
           Clear
         </button>

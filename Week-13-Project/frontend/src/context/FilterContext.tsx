@@ -1,21 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import React from "react";
-
-
-type FilterContextType = {
-  query: string;
-  setQuery: (q: string) => void;
-
-  selectedTags: string[];
-  setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
-
-  customTagsInput: string;
-  setCustomTagsInput: (val: string) => void;
-
-  finalTags: string[]; // selected + custom
-  applyFilters: () => void;
-  clearFilters: () => void;
-};
+import type { FilterContextType } from "../types/contextTypes";
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 

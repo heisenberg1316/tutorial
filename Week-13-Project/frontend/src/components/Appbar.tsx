@@ -1,22 +1,24 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./Avatar";
 import { FiArrowLeft } from 'react-icons/fi'
+import { memo } from "react";
 
-const AppBar = () => {
+interface AppBarProps {
+  isCreateBlog: boolean;
+  isHomeOrBlogs : boolean;
+  onBackClick: () => void;
+}
+
+const AppBar = memo(({isCreateBlog, isHomeOrBlogs, onBackClick} : AppBarProps) => {
   const { isLoggedIn, loading } = useAuth();
-  const location = useLocation()
-
-  // true when path is exactly “/createblog” (or adjust to `.includes("createblog")`)
-  const onCreateBlogPage = location.pathname === "/createblog"
-  const navigate = useNavigate();
 
   return (
-    <div className="flex justify-between items-center -mx-6 bg-white shadow-sm  py-4">
+    <div className="flex justify-between items-center -mx-6 bg-white shadow-sm  py-4 sticky top-0 z-40">
       <div className="flex items-center gap-3 mx-1 sm:mx-5">
         {
-          onCreateBlogPage && (
-            <FiArrowLeft onClick={() => navigate(-1)} size={40} className="py-2 hover:bg-gray-100 rounded" />
+          !isHomeOrBlogs && (
+            <FiArrowLeft onClick={onBackClick} size={40} className="py-2 cursor-pointer hover:bg-gray-100 rounded" />
           )
         }
 
@@ -28,7 +30,7 @@ const AppBar = () => {
         <nav className="flex gap-3 mx-1 sm:mx-5">
           {isLoggedIn ? (
             <div className="flex gap-2 items-center">
-              { !onCreateBlogPage && (
+              { !isCreateBlog && (
 
                 <Link
                 to="/createblog"
@@ -59,6 +61,6 @@ const AppBar = () => {
       )}
     </div>
   );
-};
+});
 
 export default AppBar;

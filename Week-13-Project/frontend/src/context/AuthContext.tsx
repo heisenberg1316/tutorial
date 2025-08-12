@@ -2,23 +2,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../api/axios'; // ✅ Adjust path to your axios instance
 import axios from 'axios';
-
-// Define the user type according to your /me response structure
-type UserType = {
-  id: string;
-  name: string;
-  email: string;
-  // Add more fields as per your backend /me response
-};
-
-type AuthContextType = {
-  isLoggedIn: boolean;
-  login: () => void;
-  logout: () => void;
-  loading : boolean;
-  user: UserType | null;
-  setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
-};
+import type { AuthContextType } from '../types/contextTypes';
+import type { UserType } from '../types/types';
 
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = async () => {
         await axios.get("http://localhost:8787/api/v1/user/logout", {withCredentials : true});
         setIsLoggedIn(false);
+        alert("Logout successfull");
         setUser(null);
     } 
 

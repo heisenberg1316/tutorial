@@ -1,67 +1,145 @@
-import { FiFilter } from "react-icons/fi"
-import BlogCard from "../components/BlogCard"
-import Stickybar from "../components/Stickybar"
-import FilterDrawer from "../components/FilterDrawer"
-import { useState } from "react"
+// src/pages/Blogs.tsx
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { FiFilter } from "react-icons/fi";
+
+import api from "../api/axios";
+import BlogCard from "../components/BlogCard";
+import BlogCardSkeleton from "../components/BlogCardSkeleton";
+import Stickybar from "../components/Stickybar";
+import FilterDrawer from "../components/FilterDrawer";
+
+const LIMIT = 6;
+
+const fetchBlogs = async ({ pageParam = null }) => {
+  const res = await api.get("/api/v1/blog/bulk", {
+    params: { cursor: pageParam, limit: LIMIT },
+  });
+  return res.data;
+};
 
 const Blogs = () => {
-    const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
-    return (
-        <div className={`w-full pt-5 ${drawerOpen ? "overflow-hidden h-[90vh]" : ""}`}>
-            {/* filter button for smaller devices */}
-            <div className="w-full lg:hidden mb-4">
-                <button onClick={() => setDrawerOpen(true)}  className="w-full border-1 py-1 rounded-md border-neutral-300 hover:bg-gray-100 cursor-pointer">
-                    <div className="flex items-center gap-3 justify-center">
-                        <FiFilter />
-                        <span className="font-medium">Filters {}</span>
-                    </div>
-                </button>
-            </div>
-            {/*blogs section using grid with sticky bar*/}
-            <div className="flex gap-8">
-                <div>
-                    <div className="flex flex-col gap-1 mb-4">
-                        <h2 className="font-bold text-lg sm:text-xl lg:text-2xl">Blogs </h2>
-                        <p>4 posts found</p>
-                    </div>
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ["blogs"],
+    queryFn: fetchBlogs,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
+    initialPageParam: null,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <BlogCard />
-                        <BlogCard />
-                        <BlogCard />
-                        <BlogCard />
-                        <BlogCard />
-                        <BlogCard />
-                        <BlogCard />
-                        <BlogCard />
-                    </div>
+  // Flatten all pages into one array
+  const allBlogs = useMemo(
+    () => data?.pages.flatMap((page) => page.blogs) || [],
+    [data]
+  );
+
+  // How many skeletons to show for the next page
+  const lastPageCount =
+    data?.pages[data.pages.length - 1]?.blogs.length ?? LIMIT;
+
+  // IntersectionObserver to trigger fetchNextPage
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    });
+    if (loaderRef.current) observer.observe(loaderRef.current);
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, [fetchNextPage, hasNextPage]);
+
+  return (
+    <div className={`w-full pt-5 ${drawerOpen ? "overflow-hidden h-[90vh]" : ""}`}>
+      {/* Mobile filter button */}
+      <div className="w-full lg:hidden mb-4">
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="w-full border py-1 rounded-md border-neutral-300 hover:bg-gray-100"
+        >
+          <div className="flex items-center gap-3 justify-center">
+            <FiFilter />
+            <span className="font-medium">Filters</span>
+          </div>
+        </button>
+      </div>
+
+      <div className="flex gap-8">
+        {/* Main Blogs Column */}
+        <div className="w-full">
+          <div className="flex flex-col gap-1 mb-4">
+            <h2 className="font-bold text-lg sm:text-xl lg:text-2xl">Blogs</h2>
+            <p>{allBlogs.length} posts found</p>
+          </div>
+
+          {/* GRID: initial-load skeletons OR real cards + next-page skeletons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {isLoading
+              ? // Initial load: show full grid of 6 skeletons
+                Array.from({ length: LIMIT }).map((_, i) => (
+                  <div key={`initial-${i}`} className="w-full h-full">
+                    <BlogCardSkeleton />
+                  </div>
+                ))
+              : // Already-loaded real blogs
+                allBlogs.map((blog) => (
+                  <Link
+                    to={`/blog/${blog.id}`}
+                    key={blog.id}
+                    className="w-full h-full"
+                  >
+                    <BlogCard blog={blog} />
+                  </Link>
+                ))}
+
+            {/* Append shimmer placeholders while fetching next page */}
+            {!isLoading &&
+              isFetchingNextPage &&
+              Array.from({ length: lastPageCount }).map((_, i) => (
+                <div key={`next-${i}`} className="w-full h-full">
+                  <BlogCardSkeleton />
                 </div>
+              ))}
+          </div>
 
-
-                {/* sticky bar */}
-                <div className="hidden lg:block relative">
-                    <Stickybar />
-                </div>
-
-                {/* backdrop overlay */}
-                {drawerOpen && (
-                <div
-                    className="fixed inset-0 z-40 bg-black opacity-80 backdrop-blur-sm transition-opacity duration-300"
-                    onClick={() => setDrawerOpen(false)}
-                />
-                )}
-                
-                {/* filter drawer */}
-                <FilterDrawer
-                    isOpen={drawerOpen}
-                    onClose={() => setDrawerOpen(false)}
-                />
-            </div>
-
-            
+          {/* Footer sentinel & messaging */}
+          <div ref={loaderRef} className="text-center py-4">
+            {!isFetchingNextPage &&
+              (hasNextPage ? "Scroll down to load more" : "No more blogs")}
+          </div>
         </div>
-    )
-}
 
-export default Blogs
+        {/* Sidebar */}
+        <div className="hidden lg:block relative">
+          <Stickybar />
+        </div>
+
+        {/* Backdrop for mobile drawer */}
+        {drawerOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black opacity-80 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
+
+        {/* Mobile filter drawer */}
+        <FilterDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      </div>
+    </div>
+  );
+};
+
+export default Blogs;

@@ -5,8 +5,15 @@ import Env from "../types/env";
 import { signupInput, signinInput } from "@mukul1316/common";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { success, treeifyError } from "zod";
+import { Variable } from "../types/variables";
+import { sha1 } from "hono/utils/crypto";
 
-const userRouter = new Hono<Env>();
+type AppContext = {
+    Bindings: Env['Bindings'],
+    Variables: Variable
+}
+
+const userRouter = new Hono<AppContext>();
 
 // POST /refresh-token
 userRouter.post("/refresh-token", async (c) => {
@@ -49,7 +56,7 @@ userRouter.get("/me", async (c) => {
     return c.json({success : false, error : "Not authenticated"}, 403);
 
   if (!token1)
-    return c.json({ success: false, error: "Not authenticated" }, 401);
+    return c.json({ success: false, error: "Access Token missing" }, 401);
 
   try {
     const decoded = await verify(token1, c.env.JWT_SECRET) as { userId: string };
@@ -57,12 +64,12 @@ userRouter.get("/me", async (c) => {
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, bio : true, imageLink : true, createdAt : true, profileViews : true},
     });
 
     return c.json({ success: true, data: user });
   } catch {
-    return c.json({ success: false, error: "Invalid token" }, 403);
+    return c.json({ success: false, error: "Invalid token"}, 403);
   }
 });
 
@@ -71,6 +78,7 @@ userRouter.post("/signup", async (c) => {
   try {
     const prisma = getPrisma(c);
     const body = await c.req.json();
+    console.log("body is ", body);
 
     const result = signupInput.safeParse(body);
     if (!result.success) {
@@ -86,18 +94,51 @@ userRouter.post("/signup", async (c) => {
       return c.json({ success: false, error: "User already exists with this email" }, 409);
     }
 
+    let uploadedImageUrl = null
+    
+    // Upload to Cloudinary using REST
+    if (body.profileImage) {
+      const timestamp = Math.floor(Date.now() / 1000).toString()
+
+      // Generate signature (SHA1 HMAC of params + API secret)
+      const paramsToSign = `timestamp=${timestamp}`
+      const signature = await sha1(paramsToSign + c.env.CLOUDINARY_API_SECRET)
+
+      const form = new FormData()
+      form.set('file', body.profileImage) // base64 or URL
+      form.set('api_key', c.env.CLOUDINARY_API_KEY)
+      form.set('timestamp', timestamp)
+      form.set('signature', signature || '')
+
+      const cloudName = c.env.CLOUDINARY_CLOUD_NAME;
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: form,
+      })
+
+      if (!res.ok) {
+          console.error('Cloudinary error', await res.text())
+          return c.json({ error: 'User Image upload failed' }, 500)
+      }
+
+      const uploadResult = await res.json()
+      uploadedImageUrl = uploadResult.secure_url
+    }
+
+
     const user = await prisma.user.create({
       data: {
         email: body.email,
-        password: body.password,
         name: body.name,
+        bio : body.bio,
+        password: body.password,
+        imageLink : uploadedImageUrl,
       },
     });
 
     return c.json({
       success: true,
       message: "User signup successful",
-      data: { id: user.id, email: user.email, name: user.name },
     }, 200);
   } catch (err) {
     console.error(err);
@@ -164,13 +205,232 @@ userRouter.post("/signin", async (c) => {
     return c.json({
       success: true,
       message: "Signin successful",
-      data: { id: user.id, email: user.email, name: user.name },
+      data: { id: user.id, email: user.email, name: user.name, bio : user.bio, imageLink : user.imageLink, createdAt : user.createdAt, profileViews : user.profileViews }
     });
   } catch (err) {
     console.error(err);
     return c.json({ success: false, error: "Internal server error during signin" }, 500);
   }
 });
+
+
+//POST user blogs 
+userRouter.post("/my-blogs", async (c) => {
+    try {
+      const token1 = getCookie(c, "accessToken");
+      const token2 = getCookie(c, "refreshToken");
+
+      if (!token2)
+        return c.json({ success: false, error: "Not authenticated" }, 403);
+
+      if (!token1)
+        return c.json({ success: false, error: "Access Token missing" }, 401);
+
+      // Get Prisma Client
+      const prisma = getPrisma(c);
+
+      // Verify the token
+      const payload = await verify(token1, c.env.JWT_SECRET) as { userId: string };
+      const userId = payload?.userId;
+
+      if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
+      // Ensure user exists
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) return c.json({ success: false, error: "User not found" }, 404);
+
+      // Fetch all blogs for the user
+      const userWithBlogs = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          blogs: {
+            orderBy: { createdAt: 'desc' },
+            select : {
+              title : true,
+              id : true,
+              tags : {
+                select : {
+                  name : true,
+                }
+              },
+              published : true,
+              createdAt : true,
+              upvotes : true,
+            },
+          },
+        },
+      });
+
+      return c.json({ success: true, blogs: userWithBlogs.blogs});
+
+    }
+    catch (err) {
+      console.error("Error in /my-blogs:", err);
+      return c.json(
+        { success: false, error: "Internal server error while fetching blogs" },
+        500
+      );
+    }
+});
+
+
+
+//POST update profile
+userRouter.post('/update-profile', async (c) => {
+  try {
+    const token1 = getCookie(c, "accessToken");
+    const token2 = getCookie(c, "refreshToken");
+
+    if(!token2)
+      return c.json({success : false, error : "Not authenticated"}, 403);
+
+    if (!token1)
+      return c.json({ success: false, error: "Access Token missing" }, 401);
+
+    const decoded = await verify(token1, c.env.JWT_SECRET) as { userId: string };
+
+    const prisma = getPrisma(c);
+    const { id, name, bio } = await c.req.json();
+    const userId = id;
+
+    if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+    // Character limits
+    if (name && name.length > 30)
+      return c.json({ error: "Name cannot exceed 30 characters" }, 400);
+    if (bio && bio.length > 200)
+      return c.json({ error: "Bio cannot exceed 200 characters" }, 400);
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return c.json({ error: "User not found" }, 404);
+
+    const now = new Date();
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    let shouldReset = false;
+
+    if (!user.lastUpdateDate || user.lastUpdateDate < yesterday) {
+      shouldReset = true;
+    }
+    else if (user.updatedCount >= 2) {
+      return c.json({ error: "Profile can only be updated twice per day" }, 429);
+    }
+
+    const newUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name,
+        bio,
+        updatedCount: shouldReset ? 1 : user.updatedCount + 1,
+        lastUpdateDate: now
+      },
+      select: { id: true, email: true, name: true, bio : true },
+    });
+
+    return c.json({ success: true, data : newUser, message: "Profile updated successfully" });
+
+  }
+  catch (err) {
+    console.error(err);
+    return c.json(
+      { success: false, error: "Internal server error during profile update" },
+      500
+    );
+  }
+});
+
+
+//POST /user details
+userRouter.post("/details", async (c) => {
+  try {
+    const token1 = getCookie(c, "accessToken");
+    const token2 = getCookie(c, "refreshToken");
+
+    if (!token2)
+      return c.json({ success: false, error: "Not authenticated" }, 403);
+
+    if (!token1)
+      return c.json({ success: false, error: "Access Token missing" }, 401);
+
+    const { email } = await c.req.json();
+    const prisma = getPrisma(c);
+
+    // Verify viewer's identity
+    const decoded = await verify(token1, c.env.JWT_SECRET) as { userId: string };
+    const viewerId = decoded.userId;
+
+    // Fetch user being viewed (with blogs)
+    const userWithBlogs = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        bio: true,
+        imageLink: true,
+        createdAt: true,
+        profileViews: true,
+        blogs: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            title: true,
+            id: true,
+            tags: { select: { name: true } },
+            published: true,
+            createdAt: true,
+            upvotes: true,
+          },
+        },
+      },
+    });
+
+    if (!userWithBlogs)
+      return c.json({ success: false, error: "User not found" }, 404);
+
+    // Increment profile view count only if viewer != profile owner
+    console.log("viewerd id is ", viewerId)
+    console.log("useriwhtblogs id is ", userWithBlogs.id)
+
+    if (viewerId !== userWithBlogs.id) {
+      const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+      const cutoff = new Date(Date.now() - COOLDOWN_MS);
+
+      const recentView = await prisma.profileView.findFirst({
+        where: {
+          viewerId,
+          viewedUserId: userWithBlogs.id,
+          viewedAt: { gte: cutoff },
+        },
+      });
+
+      if (!recentView) {
+        await prisma.$transaction([
+          prisma.profileView.create({
+            data: { viewerId, viewedUserId: userWithBlogs.id },
+          }),
+          prisma.user.update({
+            where: { id: userWithBlogs.id },
+            data: { profileViews: { increment: 1 } },
+          }),
+        ]);
+
+        // Update the in-memory object so response shows latest count
+        userWithBlogs.profileViews += 1;
+      }
+    }
+
+    console.log("data is ", userWithBlogs);
+
+    return c.json({ success: true, data: userWithBlogs });
+  } catch (err) {
+    console.error("Error in user/details:", err);
+    return c.json(
+      { success: false, error: "Internal server error" },
+      500
+    );
+  }
+});
+
 
 // POST /logout
 userRouter.get("/logout", async (c) => {

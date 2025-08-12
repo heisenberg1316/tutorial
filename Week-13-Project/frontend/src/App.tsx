@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 function App() {
 
   return (
-    <div className="flex flex-col min-h-[480px]">
+    <div className="flex flex-col mt-5 sm:mt-0 min-h-[480px]">
         {/* Hero */}
         <div className="flex flex-1 justify-center items-center ">
             <div className="flex flex-col max-w-[70%] gap-4 items-center justify-between text-center">

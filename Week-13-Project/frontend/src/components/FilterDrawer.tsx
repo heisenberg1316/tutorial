@@ -21,7 +21,7 @@ const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
   return (
     <div
-      className={`fixed  h-[82%] bottom-0 left-0 w-full bg-white border-t transition-transform duration-500 z-50
+      className={`fixed  h-[72%] bottom-0 left-0 w-full bg-white border-t transition-transform duration-500 z-50
         ${isOpen ? "translate-y-0" : "translate-y-full"}`}
     >
       <div className="p-4">
@@ -56,6 +56,17 @@ const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
             ))}
           </div>
         </div>
+
+        <div className="mb-1">
+            <label className="block text-gray-700 text-sm mb-2">Custom Tags</label>
+            <input
+              type="text"
+              placeholder="Add custom tags, separated by commas"
+              value={customTagsInput}
+              onChange={(e) => setCustomTagsInput(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+          </div>
 
         <div className="flex gap-2 mt-6">
           <button className="flex-1 bg-black text-white py-2 rounded">Apply</button>

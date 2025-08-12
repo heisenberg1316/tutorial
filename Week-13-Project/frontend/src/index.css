@@ -1,1 +1,18 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+.markdown a {
+  color: #1e90ff; /* Dodger Blue */
+  text-decoration: underline;
+}
+
+.markdown a:hover {
+  color: #104e8b;
+}
+
+.markdown hr{
+  margin : 40px auto;
+}
+.markdown img{
+  width: 100%;
+}
