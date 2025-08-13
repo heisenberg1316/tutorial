@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoggedIn(true);
     }
     const logout = async () => {
-        await api.get("/api/v1/user/logout", {withCredentials : true});
+        const resp = await api.get("/api/v1/user/logout", {withCredentials : true});
+        console.log("resp is ", resp);
         setIsLoggedIn(false);
         alert("Logout successfull");
         setUser(null);

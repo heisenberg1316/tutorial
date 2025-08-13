@@ -36,7 +36,7 @@ userRouter.post("/refresh-token", async (c) => {
 
     setCookie(c, "accessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "none",
       maxAge: 60 * 15,
     });
@@ -193,14 +193,14 @@ userRouter.post("/signin", async (c) => {
 
     setCookie(c, "accessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "none",
       maxAge: 60 * 15,
     });
 
     setCookie(c, "refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "none",
       maxAge: 60 * 60 * 24 * 7,
     });
@@ -446,9 +446,9 @@ userRouter.post("/details", async (c) => {
 
 // POST /logout
 userRouter.get("/logout", async (c) => {
-  deleteCookie(c, "accessToken");
-  deleteCookie(c, "refreshToken");
-  return c.json({ success: true, message: "Logged out successfully" });
+    deleteCookie(c, "accessToken", { path: "/", secure: true, sameSite: "none" });
+    deleteCookie(c, "refreshToken", { path: "/", secure: true, sameSite: "none" });
+    return c.json({ success: true, message: "Logged out successfully" });
 });
 
 
