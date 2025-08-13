@@ -88,7 +88,7 @@ const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfi
                         rows={3}
                       />
                     ) : (
-                      <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-2xl">{type=="my-profile" ? user.bio : data?.data.bio}</p>
+                      <p className="text-sm sm:text-base text-gray-500 font-semibold mb-4 max-w-2xl">{type=="my-profile" ? user.bio : data?.data.bio}</p>
                     )}
 
                     <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-500">
