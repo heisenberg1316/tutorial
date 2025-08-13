@@ -22,7 +22,7 @@ const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
   return (
     <div
-      className={`fixed  h-[72%] bottom-0 left-0 w-full bg-white border-t transition-transform duration-500 z-50
+      className={`fixed  h-[82%] bottom-0 left-0 w-full bg-white border-t transition-transform duration-500 z-50
         ${isOpen ? "translate-y-0" : "translate-y-full"}`}
     >
       <div className="p-4">
