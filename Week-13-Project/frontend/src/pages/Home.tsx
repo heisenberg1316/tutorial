@@ -2,6 +2,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext"
 import { Outlet, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import api from "../api/axios";
 
 const Home = () => {
 
@@ -16,7 +17,7 @@ const Home = () => {
   }, [])
 
   const logoutFull = async () => {
-      await axios.get("http://localhost:8787/api/v1/user/logout", {withCredentials : true});
+      await api.get("/api/v1/user/logout", {withCredentials : true});
       logout();
       navigate("/signin");
   }

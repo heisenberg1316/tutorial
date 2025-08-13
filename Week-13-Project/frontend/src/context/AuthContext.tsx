@@ -1,7 +1,6 @@
 // AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../api/axios'; // ✅ Adjust path to your axios instance
-import axios from 'axios';
 import type { AuthContextType } from '../types/contextTypes';
 import type { UserType } from '../types/types';
 
@@ -36,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoggedIn(true);
     }
     const logout = async () => {
-        await axios.get("http://localhost:8787/api/v1/user/logout", {withCredentials : true});
+        await api.get("/api/v1/user/logout", {withCredentials : true});
         setIsLoggedIn(false);
         alert("Logout successfull");
         setUser(null);
