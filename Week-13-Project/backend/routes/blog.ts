@@ -16,7 +16,7 @@ type AppContext = {
 
 const blogRouter = new Hono<AppContext>();
 
-function extractCloudinaryPublicId(imageUrl: string): string {
+export function extractCloudinaryPublicId(imageUrl: string): string {
   // Example input: https://res.cloudinary.com/xxx/image/upload/v1234567890/abc123.jpg
   const parts = imageUrl.split('/');
   const filename = parts[parts.length - 1]; // abc123.jpg
@@ -339,47 +339,92 @@ blogRouter.put("/:id", async (c) => {
 
 // GET: Get all blogs
 blogRouter.get('/bulk', async (c) => {
-    try {
-        const prisma = getPrisma(c);
-        const cursor = c.req.query('cursor'); // expecting blog id
-        const limit = parseInt(c.req.query('limit') || '10');
+  try {
+    const prisma = getPrisma(c);
+    const cursor = c.req.query('cursor'); // expecting blog id
+    const limit = parseInt(c.req.query('limit') || '10');
 
-        const blogs = await prisma.blog.findMany({
-            take: limit + 1, // fetch 1 extra to check if there's more
-            cursor: cursor ? { id: cursor } : undefined,
-            skip: cursor ? 1 : 0, // skip the cursor itself
-            orderBy: {
-                createdAt: 'desc',
-            },
-            select: {
-                id: true,
-                title: true,
-                content: true,
-                createdAt: true,
-                imageLink: true,
-                tags: true,
-                author: {
-                    select: {
-                        name: true
-                    }
-                }
-            },
-        });
+    const q = c.req.query('query') || "";
+    let tagsParam = c.req.query('tags') || ""; // e.g. "React,JS"
 
-        const hasMore = blogs.length > limit;
-        const nextCursor = hasMore ? blogs[limit].id : null;
+    tagsParam = tagsParam.toLowerCase();
 
-        return c.json({
-        blogs: hasMore ? blogs.slice(0, limit) : blogs,
-        nextCursor,
-        hasMore,
-        }, 200);
+    const tagsArray = Array.isArray(tagsParam)
+      ? tagsParam
+      : String(tagsParam || "")
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
 
-    } catch (err) {
-        console.error(err);
-        return c.json({ error: "Failed to fetch blogs" }, 500);
+    console.log("tags array is ", tagsArray);
+
+    // Build "where" filter
+    const andClauses: any[] = [];
+
+    if (tagsArray.length > 0) {
+      andClauses.push({
+        tags: {
+          some: {
+            name: { in: tagsArray },
+          },
+        },
+      });
     }
+
+    if (q) {
+      andClauses.push({
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { content: { contains: q, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    const where = andClauses.length > 0 ? { AND: andClauses } : undefined;
+
+    const blogs = await prisma.blog.findMany({
+      take: limit + 1,
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      where,
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        imageLink: true,
+        // return only tag names:
+        tags: { select: { id : true, name: true } },
+        author: {
+          select: {
+            name: true
+          }
+        }
+      },
+    });
+
+    const hasMore = blogs.length === limit + 1;
+const nextCursor = hasMore ? blogs[limit - 1].id : null;
+
+
+
+    return c.json({
+      blogs: hasMore ? blogs.slice(0, limit) : blogs,
+      nextCursor,
+      hasMore,
+    }, 200);
+
+  } catch (err) {
+    console.error(err);
+    return c.json({ error: "Failed to fetch blogs" }, 500);
+  }
 });
+
+
+
 
 
 // GET: Get blog by ID

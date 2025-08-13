@@ -2,6 +2,7 @@ import type { BlogPost, UserType } from "./types";
 
 export type AuthContextType = {
   isLoggedIn: boolean;
+  setIsLoggedIn : React.Dispatch<React.SetStateAction<boolean>>;
   login: () => void;
   logout: () => void;
   loading : boolean;
@@ -22,14 +23,16 @@ export type FormContextType = {
 export type FilterContextType = {
   query: string;
   setQuery: (q: string) => void;
-
   selectedTags: string[];
-  setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
-
+  setSelectedTags: (t: string[] | ((prev: string[]) => string[])) => void;
   customTagsInput: string;
-  setCustomTagsInput: (val: string) => void;
+  setCustomTagsInput: (s: string) => void;
 
-  finalTags: string[]; // selected + custom
+  // applied snapshots (set when user clicks Apply)
+  finalTags: string[];
+  finalQuery: string;
+
   applyFilters: () => void;
   clearFilters: () => void;
 };
+

@@ -7,6 +7,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { success, treeifyError } from "zod";
 import { Variable } from "../types/variables";
 import { sha1 } from "hono/utils/crypto";
+import { extractCloudinaryPublicId } from "./blog";
 
 type AppContext = {
     Bindings: Env['Bindings'],
@@ -145,6 +146,8 @@ userRouter.post("/signup", async (c) => {
     return c.json({ success: false, error: "Internal server error during signup" }, 500);
   }
 });
+
+
 
 // POST /signin
 userRouter.post("/signin", async (c) => {
@@ -354,10 +357,19 @@ userRouter.post("/details", async (c) => {
 
     const { email } = await c.req.json();
     const prisma = getPrisma(c);
+    let viewerId;
 
     // Verify viewer's identity
-    const decoded = await verify(token1, c.env.JWT_SECRET) as { userId: string };
-    const viewerId = decoded.userId;
+    try {
+      const decoded = await verify(token1, c.env.JWT_SECRET) as { userId: string };
+      viewerId = decoded.userId;
+    }
+    catch (err) {
+      console.error("Invalid or expired token:", err);
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+
 
     // Fetch user being viewed (with blogs)
     const userWithBlogs = await prisma.user.findUnique({
@@ -438,5 +450,173 @@ userRouter.get("/logout", async (c) => {
   deleteCookie(c, "refreshToken");
   return c.json({ success: true, message: "Logged out successfully" });
 });
+
+
+
+// Paste inside the same file where userRouter is defined
+
+userRouter.delete("/delete", async (c) => {
+  try {
+    // 1) Read cookies
+    const token1 = getCookie(c, "accessToken");
+    const token2 = getCookie(c, "refreshToken");
+
+    if (!token2) return c.json({ success: false, error: "Not authenticated" }, 403);
+    if (!token1) return c.json({ success: false, error: "Access Token missing" }, 401);
+
+    // 2) Verify tokens (try access first; if expired/invalid try refresh)
+    let userId: string | undefined;
+    try {
+      const payload = (await verify(token1, c.env.JWT_SECRET)) as any;
+      userId = payload?.userId ?? payload?.id;
+    } catch (err) {
+      try {
+        const payload2 = (await verify(token2, c.env.JWT_SECRET)) as any;
+        userId = payload2?.userId ?? payload2?.id;
+      } catch {
+        return c.json({ success: false, error: "Invalid or expired tokens" }, 401);
+      }
+    }
+    if (!userId) return c.json({ success: false, error: "Invalid token payload" }, 401);
+
+    const prisma = getPrisma(c);
+
+    // 3) Fetch user with authored blogs and upvotedBlogs
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        imageLink: true,
+        blogs: { select: { id: true, imageLink: true } }, // authored
+        upvotedBlogs: { select: { id: true } }, // blogs this user upvoted
+      },
+    });
+
+    if (!user) return c.json({ success: false, error: "User not found" }, 404);
+
+    const authoredBlogIds = user.blogs.map((b) => b.id);
+    const authoredBlogImageLinks = user.blogs.map((b) => b.imageLink).filter(Boolean) as string[];
+    const userImageLink = user.imageLink;
+    const upvotedBlogIds = user.upvotedBlogs.map((b) => b.id);
+    
+
+    // 5) Minimal transaction: delete authored blogs, profileView rows, user, remove orphan tags
+    await prisma.$transaction([
+      authoredBlogIds.length > 0
+        ? prisma.blog.deleteMany({ where: { authorId: userId } })
+        : Promise.resolve(),
+      prisma.profileView.deleteMany({ where: { OR: [{ viewerId: userId }, { viewedUserId: userId }] } }),
+      prisma.user.delete({ where: { id: userId } }),
+      prisma.tag.deleteMany({ where: { blogs: { none: {} } } }),
+    ]);
+
+    // --- recompute upvotes (replace existing block) ---
+    const recomputeIds = upvotedBlogIds.filter(id => !authoredBlogIds.includes(id));
+
+    if (recomputeIds.length > 0) {
+      await Promise.all(
+        recomputeIds.map(async (bid) => {
+          try {
+            // get authoritative count of upvotedBy quickly
+            const freshCount = await prisma.blog.findUnique({
+              where: { id: bid },
+              select: { _count: { select: { upvotedBy: true } } },
+            });
+
+            // if blog was deleted, freshCount will be null — skip
+            if (!freshCount) return;
+
+            const count = freshCount._count.upvotedBy ?? 0;
+
+            // update the upvotes field to the authoritative count
+            await prisma.blog.update({
+              where: { id: bid },
+              data: { upvotes: count < 0 ? 0 : count },
+            });
+          } catch (e: any) {
+            // ignore "record not found" errors (P2025) which can happen if blog
+            // was deleted between checks; log others
+            if (e?.code === "P2025") {
+              // silently skip, expected when blog removed
+              return;
+            }
+            console.error(`Recompute upvotes failed for blog ${bid}:`, e);
+          }
+        })
+      );
+    }
+
+
+    // 7) Best-effort: delete images from Cloudinary (outside DB transaction)
+    const cloudName = c.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = c.env.CLOUDINARY_API_KEY;
+    const apiSecret = c.env.CLOUDINARY_API_SECRET;
+
+    await Promise.all(
+      authoredBlogImageLinks.map(async (imgUrl) => {
+        try {
+          const publicId = extractCloudinaryPublicId(imgUrl);
+          if (!publicId) return;
+          const timestamp = Math.floor(Date.now() / 1000).toString();
+          const stringToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+          const signature = await sha1(stringToSign);
+          const form = new URLSearchParams();
+          form.set("public_id", publicId);
+          form.set("api_key", apiKey);
+          form.set("timestamp", timestamp);
+          form.set("signature", signature || "");
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+            method: "POST",
+            body: form,
+          });
+          if (!res.ok) {
+            console.error("Cloudinary delete failed for", imgUrl, "->", await res.text());
+          }
+        } catch (e) {
+          console.error("Cloudinary blog image deletion error", e);
+        }
+      })
+    );
+
+    // delete user profile image
+    if (userImageLink) {
+      try {
+        const publicId = extractCloudinaryPublicId(userImageLink);
+        if (publicId) {
+          const timestamp = Math.floor(Date.now() / 1000).toString();
+          const stringToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+          const signature = await sha1(stringToSign);
+          const form = new URLSearchParams();
+          form.set("public_id", publicId);
+          form.set("api_key", apiKey);
+          form.set("timestamp", timestamp);
+          form.set("signature", signature || "");
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+            method: "POST",
+            body: form,
+          });
+          if (!res.ok) {
+            console.error("Cloudinary delete failed for user image", userImageLink, "->", await res.text());
+          }
+        }
+      } catch (e) {
+        console.error("Cloudinary user image deletion error", e);
+      }
+    }
+
+    // 8) Clear auth cookies (optional)
+    try {
+      deleteCookie(c, "accessToken");
+      deleteCookie(c, "refreshToken");
+    } catch {}
+
+    return c.json({ success: true, message: "User account and related data deleted" }, 200);
+  } catch (err) {
+    console.error("Error deleting account:", err);
+    return c.json({ success: false, error: "Internal server error" }, 500);
+  }
+});
+
+
 
 export default userRouter;

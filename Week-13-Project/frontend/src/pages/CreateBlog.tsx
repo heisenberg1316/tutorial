@@ -10,6 +10,7 @@ import TagsField from "../components/TagsField"
 import PublishField from "../components/PublishedField"
 import ImageField from "../components/ImageField"
 import ContentPreview from "../components/ContentPreview"
+import { useAuth } from "../context/AuthContext"
 
 export default function CreatePage() {
     const {
@@ -25,6 +26,7 @@ export default function CreatePage() {
     const [isTagsOpen, setIsTagsOpen] = useState(true)
     const [autoSaveDialogue, setAutoSaveDialogue] = useState(false);
     const [preview, setPreview] = useState(false);
+    const {user} = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -44,7 +46,7 @@ export default function CreatePage() {
         setImagePreview(null)
         setIsSubmitting(false)
         setPreview(false)  
-        localStorage.removeItem("autosave-blogpost")
+        localStorage.removeItem(`autosave-${user?.email}-blogpost`)
     }
 
     const handleRestoreYes = () => {
@@ -58,7 +60,9 @@ export default function CreatePage() {
 
      // 🟢 Restore from localStorage on first load
     useEffect(() => {
-      const saved = localStorage.getItem("autosave-blogpost");
+      const saved = localStorage.getItem(`autosave-${user?.email}-blogpost`);
+      console.log("saved is ", saved);
+      
       if (saved && saved !== JSON.stringify(blogPost)) {
         const parsed = JSON.parse(saved);
         skipNextAutosave.current = true; // ✅ Skip next autosave
@@ -77,10 +81,10 @@ export default function CreatePage() {
       }
       
       const timeout = setTimeout(() => {
-        const saved = localStorage.getItem("autosave-blogpost");
+        const saved = localStorage.getItem(`autosave-${user?.email}-blogpost`);
         const newData = JSON.stringify(blogPost);
         if(newData==saved) return;
-        localStorage.setItem("autosave-blogpost", newData);
+        localStorage.setItem(`autosave-${user?.email}-blogpost`, newData); // create
       }, 1000); // Debounce
 
       return () => clearTimeout(timeout);

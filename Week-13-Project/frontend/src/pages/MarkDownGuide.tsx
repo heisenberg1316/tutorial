@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import ReactMarkdown from "react-markdown"
 import { Link } from "react-router-dom"
 
@@ -8,50 +8,52 @@ const MarkdownGuide = () => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null)
 
   const copyToClipboard = (text: string, section: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(text)
-      setCopiedSection(section)
-      setTimeout(() => setCopiedSection(null), 2000)
+    }
+    setCopiedSection(section)
+    setTimeout(() => setCopiedSection(null), 2000)
   }
 
- const sections = [
-  {
-    id: "headings",
-    title: "Headings",
-    icon: "📝",
-    description: "Create hierarchical headings using # symbols",
-    markdown: `# H1 - Main Title
+  const sections = [
+    {
+      id: "headings",
+      title: "Headings",
+      icon: "📝",
+      description: "Create hierarchical headings using # symbols",
+      markdown: `# H1 - Main Title
 ## H2 - Section Title  
 ### H3 - Subsection
 #### H4 - Sub-subsection
 ##### H5 - Minor heading
 ###### H6 - Smallest heading`,
-    syntax: `# H1 - Main Title
+      syntax: `# H1 - Main Title
 ## H2 - Section Title  
 ### H3 - Subsection
 #### H4 - Sub-subsection
 ##### H5 - Minor heading
 ###### H6 - Smallest heading`,
-  },
-  {
-    id: "formatting",
-    title: "Text Formatting",
-    icon: "✨",
-    description: "Style your text with bold, italic, and strikethrough",
-    markdown: `**Bold text** makes things stand out
+    },
+    {
+      id: "formatting",
+      title: "Text Formatting",
+      icon: "✨",
+      description: "Style your text with bold, italic, and strikethrough",
+      markdown: `**Bold text** makes things stand out
 *Italic text* adds emphasis
 ***Bold and italic*** for maximum impact
 ~~Strikethrough~~ for corrections`,
-    syntax: `**Bold text** makes things stand out
+      syntax: `**Bold text** makes things stand out
 *Italic text* adds emphasis
 ***Bold and italic*** for maximum impact
 ~~Strikethrough~~ for corrections`,
-  },
-  {
-    id: "code",
-    title: "Code",
-    icon: "💻",
-    description: "Display code inline or in blocks",
-    markdown: `Inline code: \`const x = 42\`
+    },
+    {
+      id: "code",
+      title: "Code",
+      icon: "💻",
+      description: "Display code inline or in blocks",
+      markdown: `Inline code: \`const x = 42\`
 
 \`\`\`javascript
 function greet(name) {
@@ -60,7 +62,7 @@ function greet(name) {
 
 console.log(greet("World"));
 \`\`\``,
-    syntax: `Inline code: \`const x = 42\`
+      syntax: `Inline code: \`const x = 42\`
 
 \`\`\`javascript
 function greet(name) {
@@ -69,13 +71,13 @@ function greet(name) {
 
 console.log(greet("World"));
 \`\`\``,
-  },
-  {
-    id: "lists",
-    title: "Lists",
-    icon: "📋",
-    description: "Create ordered and unordered lists",
-    markdown: `**Ordered List:**
+    },
+    {
+      id: "lists",
+      title: "Lists",
+      icon: "📋",
+      description: "Create ordered and unordered lists",
+      markdown: `**Ordered List:**
 1. First item
 2. Second item
 3. Third item
@@ -86,7 +88,7 @@ console.log(greet("World"));
   - Nested item
   - Another nested item
 - Item C`,
-    syntax: `**Ordered List:**
+      syntax: `**Ordered List:**
 1. First item
 2. Second item
 3. Third item
@@ -97,49 +99,49 @@ console.log(greet("World"));
   - Nested item
   - Another nested item
 - Item C`,
-  },
-  {
-    id: "links",
-    title: "Links",
-    icon: "🔗",
-    description: "Create clickable links",
-    markdown: `[Visit OpenAI](https://openai.com)
+    },
+    {
+      id: "links",
+      title: "Links",
+      icon: "🔗",
+      description: "Create clickable links",
+      markdown: `[Visit OpenAI](https://openai.com)
 [GitHub](https://github.com)
 [Documentation](https://docs.example.com)`,
-    syntax: `[Visit OpenAI](https://openai.com)
+      syntax: `[Visit OpenAI](https://openai.com)
 [GitHub](https://github.com)
 [Documentation](https://docs.example.com)`,
-  },
-  {
-    id: "images",
-    title: "Images",
-    icon: "🖼️",
-    description: "Embed images in your content",
-    markdown: `![Beautiful Landscape](https://media.istockphoto.com/id/1381637603/photo/mountain-landscape.jpg?s=612x612&w=0&k=20&c=w64j3fW8C96CfYo3kbi386rs_sHH_6BGe8lAAAFS-y4=)`,
-    syntax: `![Beautiful Landscape](https://media.istockphoto.com/id/1381637603/photo/mountain-landscape.jpg?s=612x612&w=0&k=20&c=w64j3fW8C96CfYo3kbi386rs_sHH_6BGe8lAAAFS-y4=)`,
-  },
-  {
-    id: "blockquotes",
-    title: "Blockquotes",
-    icon: "💬",
-    description: "Highlight important quotes or notes",
-    markdown: `> "The best way to predict the future is to create it."
+    },
+    {
+      id: "images",
+      title: "Images",
+      icon: "🖼️",
+      description: "Embed images in your content",
+      markdown: `![Beautiful Landscape](https://media.istockphoto.com/id/1381637603/photo/mountain-landscape.jpg?s=612x612&w=0&k=20&c=w64j3fW8C96CfYo3kbi386rs_sHH_6BGe8lAAAFS-y4=)`,
+      syntax: `![Beautiful Landscape](https://media.istockphoto.com/id/1381637603/photo/mountain-landscape.jpg?s=612x612&w=0&k=20&c=w64j3fW8C96CfYo3kbi386rs_sHH_6BGe8lAAAFS-y4=)`,
+    },
+    {
+      id: "blockquotes",
+      title: "Blockquotes",
+      icon: "💬",
+      description: "Highlight important quotes or notes",
+      markdown: `> "The best way to predict the future is to create it."
 > — Peter Drucker
 
 > **Pro Tip:** Use blockquotes for important notes
 > and inspirational quotes in your content.`,
-    syntax: `> "The best way to predict the future is to create it."
+      syntax: `> "The best way to predict the future is to create it."
 > — Peter Drucker
 
 > **Pro Tip:** Use blockquotes for important notes
 > and inspirational quotes in your content.`,
-  },
-  {
-    id: "dividers",
-    title: "Horizontal Rules",
-    icon: "➖",
-    description: "Create visual separators",
-    markdown: `Content above the divider
+    },
+    {
+      id: "dividers",
+      title: "Horizontal Rules",
+      icon: "➖",
+      description: "Create visual separators",
+      markdown: `Content above the divider
 
 ---
 
@@ -148,7 +150,7 @@ Content below the divider
 ***
 
 Another section`,
-    syntax: `Content above the divider
+      syntax: `Content above the divider
 
 ---
 
@@ -157,9 +159,8 @@ Content below the divider
 ***
 
 Another section`,
-  },
-]
-
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 ">
@@ -201,7 +202,7 @@ Another section`,
           {sections.map((section, index) => (
             <div
               key={section.id}
-              className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-200 dark:border-slate-700"
+              className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-auto border border-slate-200 dark:border-slate-700"
             >
               {/* Section Header */}
               <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700">
@@ -257,16 +258,49 @@ Another section`,
                   <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-pre:my-4">
                     <ReactMarkdown
                       components={{
-                        code({ node, inline, className, children, ...props }) {
-                          return !inline ? (
-                            <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg overflow-x-auto text-sm">
-                              <code {...props}>{String(children).replace(/\n$/, "")}</code>
-                            </pre>
-                          ) : (
-                            <code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-sm" {...props}>
+                        // Inline code and fallback for code nodes (we let `pre` handle block layout)
+                        code({ node, inline, className, children, ...props }: any) {
+                          if (inline) {
+                            return (
+                              <code
+                                className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-sm"
+                                {...props}
+                              >
+                                {children}
+                              </code>
+                            )
+                          }
+                          // For non-inline code, don't wrap with <pre> here — `pre` renderer will handle block-level layout
+                          return (
+                            <code className={className} {...props}>
                               {children}
                             </code>
                           )
+                        },
+
+                        // Ensure <pre> is rendered as a block element with your custom styles
+                        pre({ node, children, ...props }: any) {
+                          return (
+                            <pre
+                              className="bg-slate-900 text-slate-300 p-4 rounded-lg overflow-x-auto text-sm"
+                              {...props}
+                            >
+                              {children}
+                            </pre>
+                          )
+                        },
+
+                        // Prevent <pre> being wrapped inside a <p>
+                        p({ node, children, ...props }: any) {
+                          // If the only child is a <pre> element, return it directly (no <p> wrapper)
+                          if (
+                            Array.isArray(children) &&
+                            children.length === 1 &&
+                            (children[0] as any)?.type === "pre"
+                          ) {
+                            return <>{children[0]}</>
+                          }
+                          return <p {...props}>{children}</p>
                         },
                       }}
                     >
@@ -286,7 +320,10 @@ Another section`,
             <p className="text-xl opacity-90 mb-6 max-w-2xl mx-auto">
               Now that you know the basics, start creating beautiful content with Markdown!
             </p>
-            <Link to={"/createblog"} className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold hover:bg-slate-100 transition-colors shadow-lg">
+            <Link
+              to={"/createblog"}
+              className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold hover:bg-slate-100 transition-colors shadow-lg"
+            >
               Start Writing
             </Link>
           </div>

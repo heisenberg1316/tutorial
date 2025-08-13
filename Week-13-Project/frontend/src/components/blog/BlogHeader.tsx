@@ -19,6 +19,14 @@ interface BlogHeaderProps {
   likedByUser : boolean
 }
 
+export function dateConverter(publishDate){
+  return  new Date(publishDate).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+}
+
 export default function BlogHeader({
   email,
   title,
@@ -30,11 +38,7 @@ export default function BlogHeader({
   likedByUser,
 }: BlogHeaderProps) {
 
-  publishDate = new Date(publishDate).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
+  publishDate = dateConverter(publishDate);
 
   const { user } = useAuth();
   const [upvotesCount, setUpvotesCount] = useState(upvotes);

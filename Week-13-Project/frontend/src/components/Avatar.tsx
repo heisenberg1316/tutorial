@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useForm } from '../context/FormContext';
 
 const Avatar = () => {
   const { user, logout } = useAuth();
@@ -9,13 +10,24 @@ const Avatar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const {setBlogPost, setImagePreview} = useForm();
 
   const toggleDropdown = () => setOpen((prev) => !prev);
 
   const logOutFull = async () => {
       await logout();
       queryClient.clear();
+      setBlogPost({
+          title: "",
+          content: "",
+          published: false,
+          tags: [],
+          image: null,
+        })
+      setImagePreview(null);
+        
       navigate("/signin");
+
   }
 
   // Close dropdown on outside click

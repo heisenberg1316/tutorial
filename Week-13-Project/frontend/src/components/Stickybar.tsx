@@ -90,7 +90,7 @@ export default function Stickybar() {
                         : "bg-white text-black font-semibold border-gray-300 hover:bg-gray-100"
                     }`}
                 >
-                  {tag} {isSelected }
+                  {tag}
                 </button>
               );
             })}

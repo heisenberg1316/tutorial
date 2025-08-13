@@ -1,5 +1,4 @@
-import { createContext, useContext, useState } from "react";
-import React from "react";
+import React, { createContext, useContext, useState } from "react";
 import type { FilterContextType } from "../types/contextTypes";
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -9,14 +8,19 @@ export const FilterProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customTagsInput, setCustomTagsInput] = useState("");
   const [finalTags, setFinalTags] = useState<string[]>([]);
+  const [finalQuery, setFinalQuery] = useState<string>("");
 
   const applyFilters = () => {
     const custom = customTagsInput
       .split(",")
       .map((t) => t.trim())
-      .filter((t) => t);
+      .filter((t) => t.length > 0);
+
     const combined = Array.from(new Set([...selectedTags, ...custom]));
     setFinalTags(combined);
+
+    // snapshot the query too — only applied when hitting Apply
+    setFinalQuery(query);
   };
 
   const clearFilters = () => {
@@ -24,6 +28,7 @@ export const FilterProvider = ({ children }: { children: React.ReactNode }) => {
     setSelectedTags([]);
     setCustomTagsInput("");
     setFinalTags([]);
+    setFinalQuery("");
   };
 
   return (
@@ -36,6 +41,7 @@ export const FilterProvider = ({ children }: { children: React.ReactNode }) => {
         customTagsInput,
         setCustomTagsInput,
         finalTags,
+        finalQuery,
         applyFilters,
         clearFilters,
       }}

@@ -95,7 +95,8 @@ export default function EditBlog() {
           });
           setImagePreview(null);
           setPreview(false);
-          localStorage.removeItem(`autosave-blogpost-${id}`);
+          localStorage.removeItem(`autosave-${user?.email}-blogpost-${id}`);
+          
         } 
         catch (err) {
           console.error("Error updating blog post:", err);
@@ -129,7 +130,7 @@ export default function EditBlog() {
       }
       
 
-      const key = `autosave-blogpost-${id}`;
+      const key = `autosave-${user?.email}-blogpost-${id}`;
       const savedStr = localStorage.getItem(key);
 
       const mapped = mapServerToBlogPost(data?.blog ?? {});
@@ -178,10 +179,11 @@ export default function EditBlog() {
       }
       
       const timeout = setTimeout(() => {
-        const saved = localStorage.getItem(`autosave-blogpost-${id}`);
+        const saved = localStorage.getItem(`autosave-${user?.email}-blogpost-${id}`);
         const newData = JSON.stringify(blogPost);
         if(newData==saved) return;
-        localStorage.setItem(`autosave-blogpost-${id}`, newData);
+        localStorage.setItem(`autosave-${user?.email}-blogpost-${id}`, newData); // edit
+
       }, 1000); // Debounce
 
       return () => clearTimeout(timeout);
@@ -194,7 +196,7 @@ export default function EditBlog() {
     if (isError) {
       // optionally examine `error` to show custom message
       return (
-          <BlogNotFound />
+          <BlogNotFound type="blog" />
       );
     }
 
@@ -277,8 +279,7 @@ export default function EditBlog() {
                 className={`flex-1 px-4 py-2 text-sm sm:text-base font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
                   !isFormValid || isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                 }`}
-              >
-                {isSubmitting ? "Saving..." : blogPost.published ? "Publish Post" : "Save Draft"}
+              > Update
               </button>
             </div>
           </form>

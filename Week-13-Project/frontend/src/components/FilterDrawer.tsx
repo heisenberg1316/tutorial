@@ -10,7 +10,8 @@ const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const {
     query, setQuery,
     selectedTags, setSelectedTags,
-    customTagsInput, setCustomTagsInput
+    customTagsInput, setCustomTagsInput,
+    applyFilters, clearFilters
   } = useFilter();
 
   const toggleTag = (tag: string) => {
@@ -58,24 +59,31 @@ const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
         </div>
 
         <div className="mb-1">
-            <label className="block text-gray-700 text-sm mb-2">Custom Tags</label>
-            <input
-              type="text"
-              placeholder="Add custom tags, separated by commas"
-              value={customTagsInput}
-              onChange={(e) => setCustomTagsInput(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-            />
-          </div>
+          <label className="block text-gray-700 text-sm mb-2">Custom Tags</label>
+          <input
+            type="text"
+            placeholder="Add custom tags, separated by commas"
+            value={customTagsInput}
+            onChange={(e) => setCustomTagsInput(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          />
+        </div>
 
         <div className="flex gap-2 mt-6">
-          <button className="flex-1 bg-black text-white py-2 rounded">Apply</button>
+          <button
+            className="flex-1 bg-black text-white py-2 rounded"
+            onClick={() => {
+              applyFilters();
+              onClose();
+            }}
+          >
+            Apply
+          </button>
           <button
             className="flex-1 border py-2 rounded"
             onClick={() => {
-              setQuery("");
-              setSelectedTags([]);
-              setCustomTagsInput("");
+              clearFilters();
+              onClose();
             }}
           >
             Clear

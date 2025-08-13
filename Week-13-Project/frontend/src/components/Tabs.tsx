@@ -4,6 +4,8 @@ import { useState } from "react";
 import ShowModal from "./ShowModal";
 import { Link, useMatch, useNavigate } from "react-router-dom";
 import BgOverlay from "./BgOverlay";
+import { useAuth } from "../context/AuthContext";
+import DeleteModal from "./DeleteModal";
 
 const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
     console.log("data is ", data);
@@ -12,6 +14,9 @@ const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
     const [blogIdToDelete, setBlogIdToDelete] = useState<string | null>(null);
     const navigate = useNavigate();
     const isMyProfile = useMatch("my-profile");
+    const {user, setUser, setIsLoggedIn} = useAuth();
+    const [delAccount, setDelAccount] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => api.delete(`/api/v1/blog/${id}`),
@@ -39,10 +44,42 @@ const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
         setShowModal(true);
     };
 
+    // Usage inside component
+    const deleteAccount = async () => {
+        if (isDeleting) return;
+        try {
+          setIsDeleting(true);
+          let response = await api.delete("/api/v1/user/delete");
+
+          for (let key in localStorage) {
+              if (key.startsWith(`autosave-${user?.email}-`)) {
+                  localStorage.removeItem(key);
+              }
+          }
+
+          // success actions
+          setIsLoggedIn(false);
+          setUser(null);
+          queryClient.clear();
+          alert("Profile deleted successfully");
+          navigate("/");
+        }
+        catch (err: any) {
+          console.error("err is ", err);
+          alert(err?.response?.data?.error || err.message || "Something went wrong");
+        }
+        finally {
+          setIsDeleting(false);
+        }
+    };
+
+
     return (
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           {showModal && <BgOverlay />}
           {showModal && <ShowModal setShowModal={setShowModal} handleDelete={confirmDeleteBlog} page={"my-profile"} />}
+          {delAccount && <BgOverlay />}
+          {delAccount && <DeleteModal setDelAccount={setDelAccount} handleDelete={deleteAccount} isDeleting={isDeleting}/>}
           <div className="border-b border-gray-200">
             {/* nav bar */}
             <nav className="flex space-x-8 px-4 sm:px-6 overflow-auto" aria-label="Tabs">
@@ -313,7 +350,9 @@ const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
                     <p className="text-sm text-red-600 mb-4">
                       Once you delete your account, there is no going back. Please be certain.
                     </p>
-                    <button className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+                    <button onClick={() => {
+                      setDelAccount(!delAccount);
+                    }} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
                       Delete Account
                     </button>
                   </div>

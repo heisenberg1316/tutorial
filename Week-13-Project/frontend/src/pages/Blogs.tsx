@@ -1,4 +1,3 @@
-// src/pages/Blogs.tsx
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -9,19 +8,30 @@ import BlogCard from "../components/BlogCard";
 import BlogCardSkeleton from "../components/BlogCardSkeleton";
 import Stickybar from "../components/Stickybar";
 import FilterDrawer from "../components/FilterDrawer";
+import { useFilter } from "../context/FilterContext";
 
-const LIMIT = 6;
+const LIMIT = 9;
 
-const fetchBlogs = async ({ pageParam = null }) => {
-  const res = await api.get("/api/v1/blog/bulk", {
-    params: { cursor: pageParam, limit: LIMIT },
-  });
+const fetchBlogs = async ({ pageParam = null, queryKey }: any) => {
+  // queryKey = ['blogs', finalQuery, finalTags]
+  const [, finalQuery, finalTags] = queryKey as [string, string, string[]];
+
+  const params: any = {
+    cursor: pageParam,
+    limit: LIMIT,
+  };
+
+  if (finalQuery) params.query = finalQuery;
+  if (finalTags && finalTags.length > 0) params.tags = finalTags.join(",");
+
+  const res = await api.get("/api/v1/blog/bulk", { params });
   return res.data;
 };
 
 const Blogs = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const loaderRef = useRef<HTMLDivElement | null>(null);
+  const { finalTags, finalQuery } = useFilter();
 
   const {
     data,
@@ -30,13 +40,14 @@ const Blogs = () => {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ["blogs"],
+    queryKey: ["blogs", finalQuery, finalTags],
     queryFn: fetchBlogs,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: null,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    keepPreviousData: false, // new filter will create a new cache key => new results
   });
 
   // Flatten all pages into one array
@@ -61,6 +72,11 @@ const Blogs = () => {
       if (loaderRef.current) observer.unobserve(loaderRef.current);
     };
   }, [fetchNextPage, hasNextPage]);
+
+  // optional: scroll to top when applied filters change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [finalTags, finalQuery]);
 
   return (
     <div className={`w-full pt-5 ${drawerOpen ? "overflow-hidden h-[90vh]" : ""}`}>
@@ -95,7 +111,7 @@ const Blogs = () => {
                   </div>
                 ))
               : // Already-loaded real blogs
-                allBlogs.map((blog) => (
+                allBlogs.map((blog: any) => (
                   <Link
                     to={`/blog/${blog.id}`}
                     key={blog.id}

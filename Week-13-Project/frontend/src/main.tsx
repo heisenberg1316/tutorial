@@ -133,7 +133,7 @@ createRoot(document.getElementById('root')!).render(
         <EditFormProvider>
           <FilterProvider>
             <RouterProvider router={router} />
-            <ReactQueryDevtools initialIsOpen={false} />
+            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
           </FilterProvider>
         </EditFormProvider>
       </FormProvider>

@@ -15,7 +15,7 @@ function App() {
                 </p>
                 <div className="mt-2 flex flex-col gap-4 sm:flex-row font-mono items-center">
                     <Link to="signin" className="font-medium text-sm border border-black rounded-lg px-3 py-2 sm:px-4 sm:py-2 sm:text-lg bg-white hover:bg-black hover:text-white">Get Started  {'\u2192'} </Link>
-                    <Link to="signup" className="font-medium text-sm border border-black rounded-lg px-3 py-2 sm:px-4 sm:py-2 sm:text-lg bg-white hover:bg-black hover:text-white">Learn More</Link>
+                    
                 </div>
             </div>
         </div>
