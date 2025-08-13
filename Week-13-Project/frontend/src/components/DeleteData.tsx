@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { BlogPost } from "../types/types"
 import ShowModal from "./ShowModal"
 import BgOverlay from "./BgOverlay"
+import { useAuth } from "../context/AuthContext"
 
 interface DeleteDataProps {
   id ?: string
@@ -11,9 +12,10 @@ interface DeleteDataProps {
 
 const DeleteData = ({ id, setBlogPost, setImagePreview }: DeleteDataProps) => {
   const [showModal, setShowModal] = useState(false)
+  const {user} = useAuth();
 
-  const handleDelete = (id : string) => {
-    localStorage.removeItem(`autosave-blogpost-${id}`)
+  const handleDelete = (id : string | undefined) => {
+    localStorage.removeItem(`autosave-${user?.email}-blogpost-${id}`)
     setBlogPost({
       title: "",
       content: "",

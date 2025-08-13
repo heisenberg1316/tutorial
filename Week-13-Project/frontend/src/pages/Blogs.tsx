@@ -47,7 +47,6 @@ const Blogs = () => {
     initialPageParam: null,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
-    keepPreviousData: false, // new filter will create a new cache key => new results
   });
 
   // Flatten all pages into one array

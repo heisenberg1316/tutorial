@@ -5,10 +5,9 @@ import { FiHeart, FiBookmark, FiShare2, FiMessageCircle } from "react-icons/fi"
 
 interface BlogActionsProps {
   initialLikes: number
-  blogId: string
 }
 
-export default function BlogActions({ initialLikes, blogId }: BlogActionsProps) {
+export default function BlogActions({ initialLikes }: BlogActionsProps) {
   const [likes, setLikes] = useState(initialLikes)
   const [isLiked, setIsLiked] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)

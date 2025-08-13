@@ -1,8 +1,5 @@
-// BlogHeader.tsx
-"use client"
 
 import { FiCalendar, FiClock, FiHeart } from "react-icons/fi"
-import { useAuth } from "../../context/AuthContext"
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "../../api/axios"
@@ -19,7 +16,23 @@ interface BlogHeaderProps {
   likedByUser : boolean
 }
 
-export function dateConverter(publishDate){
+interface BlogData {
+  author: { name: string; email: string; imageLink: string };
+  content: string;
+  createdAt: string;
+  id: string;
+  imageLink: string;
+  tags: any[];
+  title: string;
+  upvotes: number;
+}
+
+interface BlogCache {
+  blog: BlogData;
+  likedByUser: boolean;
+}
+
+export function dateConverter(publishDate: string | number | Date){
   return  new Date(publishDate).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -40,7 +53,6 @@ export default function BlogHeader({
 
   publishDate = dateConverter(publishDate);
 
-  const { user } = useAuth();
   const [upvotesCount, setUpvotesCount] = useState(upvotes);
   const [liked, setLiked] = useState(likedByUser);
   const navigate = useNavigate();
@@ -60,7 +72,8 @@ export default function BlogHeader({
       await queryClient.cancelQueries({ queryKey: ["blog", blogId] });
 
       // 2) snapshot previous cache for rollback
-      const previous = queryClient.getQueryData(["blog", blogId]);
+      const previous = queryClient.getQueryData<BlogCache>(["blog", blogId]);
+      console.log("previous is ", previous);
 
       // 3) update cache optimistically (handle both shapes: { blog: {...} } or flat)
       queryClient.setQueryData(["blog", blogId], (old: any) => {
@@ -93,7 +106,7 @@ export default function BlogHeader({
       if (previous) {
         const isLikedPrev = !!previous.likedByUser;
         setLiked(!isLikedPrev);
-        const prevUpvotes = previous.blog ? previous.blog.upvotes : previous.upvotes;
+        const prevUpvotes = previous.blog.upvotes
         setUpvotesCount(isLikedPrev ? prevUpvotes - 1 : prevUpvotes + 1);
       } else {
         // fallback: toggle local

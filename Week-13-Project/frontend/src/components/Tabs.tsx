@@ -7,7 +7,16 @@ import BgOverlay from "./BgOverlay";
 import { useAuth } from "../context/AuthContext";
 import DeleteModal from "./DeleteModal";
 
-const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
+
+interface TabsProps {
+  activeTab: string; // or "Published" | "Draft" for stricter typing
+  setActiveTab: React.Dispatch<React.SetStateAction<"published" | "drafts" | "settings">>;
+  data: any; // replace with proper type if available, e.g., UserType
+  publishedBlogs: any[]; // replace `any` with BlogType if available
+  draftBlogs: any[]; // replace `any` with BlogType if available
+}
+
+const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs} : TabsProps) => {
     console.log("data is ", data);
     const queryClient = useQueryClient();
     const [showModal, setShowModal] = useState(false);
@@ -49,7 +58,7 @@ const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
         if (isDeleting) return;
         try {
           setIsDeleting(true);
-          let response = await api.delete("/api/v1/user/delete");
+          await api.delete("/api/v1/user/delete");
 
           for (let key in localStorage) {
               if (key.startsWith(`autosave-${user?.email}-`)) {
@@ -162,7 +171,9 @@ const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
                             <p className="text-sm sm:text-base text-gray-600 mb-3 line-clamp-2">{blog.description}</p>
 
                             <div className="flex flex-wrap gap-1 mb-3">
-                                {blog.tags?.slice(0, 5)?.map((tagObj) => (
+                              {console.log("tags is ", blog.tags)}
+                                {blog.tags?.slice(0, 5)?.map((tagObj : {name : string}) => (
+                                  
                                     <span
                                     key={tagObj.name}
                                     className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-md"
@@ -241,7 +252,7 @@ const Tabs = ({activeTab, setActiveTab, data, publishedBlogs, draftBlogs}) => {
                             <p className="text-sm sm:text-base text-gray-600 mb-3 line-clamp-2">{blog.description}</p>
 
                             <div className="flex flex-wrap gap-1 mb-3">
-                                {blog.tags?.slice(0, 5)?.map((tagObj) => (
+                                {blog.tags?.slice(0, 5)?.map((tagObj : {name : string}) => (
                                     <span
                                     key={tagObj.name}
                                     className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-md"

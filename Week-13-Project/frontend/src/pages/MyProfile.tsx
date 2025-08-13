@@ -18,14 +18,14 @@ export default function MyProfile() {
   const {user, setUser} = useAuth();
   const [editedProfile, setEditedProfile] = useState(user)
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['my-blogs'],
     queryFn: fetchMyBlogs,
     staleTime: 10 * 60 * 1000, // optional caching
   });
 
-  const publishedBlogs = data?.blogs?.filter(b => b.published) ?? []
-  const draftBlogs = data?.blogs?.filter(b => b.published==false) ?? []
+  const publishedBlogs = data?.blogs?.filter((b : any) => b.published) ?? []
+  const draftBlogs = data?.blogs?.filter((b : any) => b.published==false) ?? []
 
 
   return (

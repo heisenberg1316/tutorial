@@ -66,7 +66,7 @@ export default function EditBlog() {
     const navigate = useNavigate();
     const {user} = useAuth();
 
-    const { data, isLoading, isError, error } = useQuery({
+    const { data, isLoading, isError } = useQuery({
         queryKey: ["blog", id],
         queryFn: () => fetchBlogById(id!),
         enabled: !!id,
@@ -98,7 +98,7 @@ export default function EditBlog() {
           localStorage.removeItem(`autosave-${user?.email}-blogpost-${id}`);
           
         } 
-        catch (err) {
+        catch (err : any) {
           console.error("Error updating blog post:", err);
           console.log("err is ", err);
           alert(err?.response?.data?.message);
@@ -125,7 +125,7 @@ export default function EditBlog() {
       // wait for server response
       if (isLoading) return;
       if (isError) return;          // <-- don't run ownership/restore logic on error
-      if(data?.blog?.author?.email!==user.email){
+      if(data?.blog?.author?.email!==user?.email){
         navigate("/");
       }
       

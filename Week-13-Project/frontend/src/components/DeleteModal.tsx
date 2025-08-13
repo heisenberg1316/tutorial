@@ -1,4 +1,10 @@
 
+interface DeleteModalProps {
+  setDelAccount: (value: boolean) => void; // function to set state
+  handleDelete: () => void;               // function to handle deletion
+  isDeleting?: boolean;                    // optional boolean
+}
+
 const Spinner = () => (
   <svg
     className="animate-spin h-4 w-4 inline-block align-middle"
@@ -12,7 +18,7 @@ const Spinner = () => (
   </svg>
 );
 
-const DeleteModal = ({ setDelAccount, handleDelete, isDeleting = false }) => {
+const DeleteModal = ({ setDelAccount, handleDelete, isDeleting = false } : DeleteModalProps) => {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"

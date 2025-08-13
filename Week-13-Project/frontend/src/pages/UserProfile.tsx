@@ -7,9 +7,10 @@ import Shimmer from "../components/Shimmer"
 import ProfileHeader from "../components/ProfileHeader"
 import { useNavigate, useParams } from "react-router-dom"
 import DetailsNotFound from "./DetailsNotFound"
+import type { UserType } from "../types/types"
 
-export const fetchUserDetails = async (email, user) => {
-    if(email==user.email) return;
+export const fetchUserDetails = async (email : string | undefined, user : UserType | null) => {
+    if(email==user?.email) return;
 
     const res = await api.post('/api/v1/user/details', {email});
     console.log("res is ", res);
@@ -26,11 +27,11 @@ export default function UserProfile() {
 
   
   useEffect(() => {
-      if(email==user.email) navigate("/my-profile")
+      if(email==user?.email) navigate("/my-profile")
   }, [])
 
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError } = useQuery({
       queryKey: [`user`, email],
       queryFn: () => fetchUserDetails(email, user),
       staleTime: 10 * 60 * 1000, // optional caching
@@ -40,8 +41,8 @@ export default function UserProfile() {
       refetchOnMount: false,
   });
 
-  const publishedBlogs = data?.data?.blogs?.filter(b => b.published) ?? []
-  const draftBlogs = data?.data?.blogs?.filter(b => b.published==false) ?? []
+  const publishedBlogs = data?.data?.blogs?.filter((b : any) => b.published) ?? []
+  const draftBlogs = data?.data?.blogs?.filter((b : any) => b.published==false) ?? []
 
   if(isError){
     return <DetailsNotFound type="user" />
@@ -53,10 +54,10 @@ export default function UserProfile() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Profile Header */}
-        <ProfileHeader type="user-profile" user={user} setUser={setUser} data={data} editedProfile={editedProfile} setEditedProfile={setEditedProfile}/>
+        <ProfileHeader type="user-profile" user={user} setUser={setUser} data={data?.data} editedProfile={editedProfile} setEditedProfile={setEditedProfile}/>
 
         {/* Tabs */}
-        {isLoading
+        {isLoading  
           ?  <Shimmer />
           : <Tabs activeTab={activeTab} setActiveTab={setActiveTab} data={data} publishedBlogs={publishedBlogs} draftBlogs={draftBlogs}/>
         }

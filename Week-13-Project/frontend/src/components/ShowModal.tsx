@@ -1,6 +1,12 @@
-import React from 'react'
 
-const ShowModal = ({setShowModal, handleDelete, page}) => {
+
+interface ShowModalProps {
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
+  handleDelete: () => void;
+  page: string;
+}
+
+const ShowModal = ({setShowModal, handleDelete, page} : ShowModalProps) => {
   return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-xl p-6 w-[90%] max-w-md">

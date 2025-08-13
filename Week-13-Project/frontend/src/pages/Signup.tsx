@@ -62,7 +62,7 @@ const Signup = () => {
         };
         
         try {
-            const res = await api.post("/api/v1/user/signup", signupData);
+            await api.post("/api/v1/user/signup", signupData);
             alert("Signup successful");
             navigate("/signin");
         }

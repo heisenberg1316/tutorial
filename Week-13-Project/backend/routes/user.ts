@@ -37,7 +37,7 @@ userRouter.post("/refresh-token", async (c) => {
     setCookie(c, "accessToken", accessToken, {
       httpOnly: true,
       secure: false,
-      sameSite: "Strict",
+      sameSite: "none",
       maxAge: 60 * 15,
     });
 
@@ -194,14 +194,14 @@ userRouter.post("/signin", async (c) => {
     setCookie(c, "accessToken", accessToken, {
       httpOnly: true,
       secure: false,
-      sameSite: "Strict",
+      sameSite: "none",
       maxAge: 60 * 15,
     });
 
     setCookie(c, "refreshToken", refreshToken, {
       httpOnly: true,
       secure: false,
-      sameSite: "Strict",
+      sameSite: "none",
       maxAge: 60 * 60 * 24 * 7,
     });
 
@@ -264,7 +264,7 @@ userRouter.post("/my-blogs", async (c) => {
         },
       });
 
-      return c.json({ success: true, blogs: userWithBlogs.blogs});
+      return c.json({ success: true, blogs: userWithBlogs?.blogs});
 
     }
     catch (err) {

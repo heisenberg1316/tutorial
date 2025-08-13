@@ -16,7 +16,6 @@ import { PublicRoute } from './components/PublicRoute';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import KeepAliveWrapper from './components/KeepAliveWrapper';
 import { EditFormProvider } from './context/editFormContext';
-import MarkdownGuide from './pages/MarkDownGuide';
 
 const queryClient = new QueryClient();
 
@@ -115,7 +114,7 @@ const router = createBrowserRouter([
       {
         path : "/tutorial",
         element : (
-            <MarkdownGuide />
+            <MarkDownGuide />
         )
       }
     ]

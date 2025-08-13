@@ -1,8 +1,5 @@
-import React, { useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-
-
 
 const BlogContent = ({content} : {content : string}) => {
   

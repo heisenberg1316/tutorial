@@ -2,18 +2,48 @@ import React, { useState } from 'react'
 import api from '../api/axios';
 import type { UserType } from '../types/types';
 
+
+interface MyProfileData {
+  success: true;
+  blogs: any[];
+}
+
+interface OtherProfileData extends UserType {
+  blogs: any[];
+}
+
+type ProfileData = MyProfileData | OtherProfileData;
+
+
 interface HeaderProps {
     type : string
-    user ?: UserType,
-    setUser ?: React.Dispatch<React.SetStateAction<UserType>>;
-    data : object;
-    editedProfile ?: UserType,
-    setEditedProfile ?: React.Dispatch<React.SetStateAction<UserType>>;
+    user ?: UserType | null,
+    setUser ?: React.Dispatch<React.SetStateAction<UserType | null>>;
+    data : ProfileData;
+    editedProfile ?: UserType | null,
+    setEditedProfile ?: React.Dispatch<React.SetStateAction<UserType | null>>;
 }
 
 const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfile} : HeaderProps) => {
-   const [isEditing, setIsEditing] = useState(false)
-   const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isEditing, setIsEditing] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const profileImage = type === "my-profile"
+        ? user?.imageLink ?? "/images/ProfileAvatar.png"
+        : data && 'imageLink' in data
+          ? data.imageLink
+          : "/images/ProfileAvatar.png";
+
+    const profileName = type === "my-profile" ? user?.name ?? "-" : data && "name" in data ? data.name : "-";
+
+    const profileEmail = type === "my-profile" ? user?.email ?? "-" : data && "email" in data ? data.email : "-";
+
+    const profileBio = type === "my-profile" ? user?.bio ?? "-" : data && "bio" in data ? data.bio : "-";
+
+    const profileBlogsCount = type === "my-profile" ? data?.blogs?.length ?? 0 : data && "blogs" in data ? data.blogs.length : 0;
+
+    const profileViews = type === "my-profile" ? user?.profileViews ?? 0 : data && "profileViews" in data ? data.profileViews : 0;
+
+   console.log("data inside profile header is ", data);
 
    const handleSaveProfile = async () => {
       // Here you would typically save to an API
@@ -22,14 +52,14 @@ const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfi
         let result = await api.post("/api/v1/user/update-profile", editedProfile);
         
         console.log("result is ", result);
-        setUser((old : UserType) => ({
+        setUser?.((old) => ({
           ...old,
           ...result?.data?.data
         }));
 
         alert("Profile updated successfully!")
       }
-      catch(err){
+      catch(err : any){
         alert(err?.response?.data?.error);
       }
       finally {
@@ -38,7 +68,7 @@ const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfi
       }
   }
 
-  const joinedAt = new Date(user.createdAt).toLocaleDateString("en-GB", {
+  const joinedAt = new Date(user?.createdAt || "").toLocaleDateString("en-GB", {
                   day: "2-digit",
                   month: "short",
                   year: "numeric",
@@ -55,10 +85,12 @@ const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfi
                   title={user?.name}
                 >
                    <img
-                      src={ (type === "my-profile" ? user?.imageLink : data?.data?.imageLink) || "/images/ProfileAvatar.png"}
-                      alt="User avatar"
-                      className="w-full h-full object-cover"
-                    />
+                    src={profileImage}
+                    alt="User avatar"
+                    className="w-full h-full object-cover"
+                  />
+
+
               </button>
               </div>
 
@@ -69,26 +101,52 @@ const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfi
                     {(isEditing && type=="my-profile") ? (
                       <input
                         type="text"
-                        value={editedProfile.name}
+                        value={editedProfile?.name}
                         maxLength={30}
-                        onChange={(e) => setEditedProfile((prev) => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) => setEditedProfile?.((prev) =>
+                                      prev
+                                        ? { ...prev, name: e.target.value }
+                                        : { 
+                                            id: "", 
+                                            name: e.target.value, 
+                                            email: "", 
+                                            bio: "", 
+                                            imageLink: "", 
+                                            createdAt: new Date(), 
+                                            profileViews: 0 
+                                          }
+                                    ) 
+                                  }
                         className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 border border-gray-300 rounded-md px-2 py-1 mb-2"
                       />
                     ) : (
-                      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{type=="my-profile" ? user.name : data?.data.name}</h1>
+                      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{profileName}</h1>
                     )}
 
-                    <p className="text-sm sm:text-base text-gray-600 mb-2">{type=="my-profile" ? user.email : data?.data.email}</p>
+                    <p className="text-sm sm:text-base text-gray-600 mb-2">{profileEmail}</p>
 
                     {(isEditing && type=="my-profile")  ? (
                       <textarea
-                        value={editedProfile.bio}
-                        onChange={(e) => setEditedProfile((prev) => ({ ...prev, bio: e.target.value }))} maxLength={200}
+                        value={editedProfile?.bio}
+                        onChange={(e) => setEditedProfile?.((prev) =>
+                                      prev
+                                        ? { ...prev, bio: e.target.value }
+                                        : { 
+                                            id: "", 
+                                            name: "", 
+                                            email: "", 
+                                            bio: e.target.value, 
+                                            imageLink: "", 
+                                            createdAt: new Date(), 
+                                            profileViews: 0 
+                                          }
+                                  )}
+                        maxLength={200}
                         className="w-full text-sm sm:text-base text-gray-700 border border-gray-300 rounded-md px-2 py-1 mb-4 resize-none"
                         rows={3}
                       />
                     ) : (
-                      <p className="text-sm sm:text-base text-gray-500 font-semibold mb-4 max-w-2xl">{type=="my-profile" ? user.bio : data?.data.bio}</p>
+                      <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-2xl">{profileBio}</p>
                     )}
 
                     <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-500">
@@ -145,13 +203,13 @@ const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfi
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
               <div className="text-center">
                 <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                  {type=="my-profile" ? data?.blogs.length : data?.data?.blogs.length}
+                  {profileBlogsCount}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">Posts</div>
               </div>
               <div className="text-center">
                 <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                  {type=="my-profile" ? user?.profileViews : data?.data?.profileViews}
+                  {profileViews}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">Views</div>
               </div>

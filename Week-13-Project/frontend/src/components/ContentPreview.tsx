@@ -1,7 +1,13 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm     from 'remark-gfm';
+import type { BlogPost } from '../types/types';
 
-const ContentPreview = ({blogPost}) => {
+interface ContentPreviewProps {
+  blogPost: BlogPost;
+}
+
+const ContentPreview = ({blogPost} : ContentPreviewProps) => {
+  console.log("blogpost is ", blogPost);
   return (
     <div className="prose markdown border-2 rounded-xl border-gray-300 shadow-xl px-2 max-h-[600px] max-w-[900px] overflow-auto">
       <ReactMarkdown

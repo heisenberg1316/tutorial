@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8787", // ✅ your backend URL here
+  baseURL: "https://backend.rawatmukul5000.workers.dev", // ✅ your backend URL here :-> http://localhost:8787 (DEV)
   withCredentials: true,                // ✅ send cookies (refresh token)
 });
 

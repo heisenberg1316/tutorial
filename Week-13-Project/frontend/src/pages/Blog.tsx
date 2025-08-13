@@ -22,7 +22,7 @@ export const fetchBlogById = async (id: string) => {
 const Blog = () => {
   const { id } = useParams<{ id: string }>();
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError } = useQuery({
       queryKey: ["blog", id],
       queryFn: () => fetchBlogById(id!),
       enabled: !!id,
