@@ -1,8 +1,5 @@
 {
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://backend.rawatmukul5000.workers.dev/:path*"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
