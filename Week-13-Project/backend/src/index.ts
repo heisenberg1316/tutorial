@@ -8,7 +8,9 @@ import { cors } from 'hono/cors'
 const app = new Hono<Env>() // 👈 Tell Hono about your environment variables
 
 app.use('*', cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173',
+    "https://harkirat-lectures.vercel.app"
+  ],
   credentials: true,
 }))
 
