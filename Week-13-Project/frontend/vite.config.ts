@@ -4,9 +4,17 @@ import tailwindcss from "@tailwindcss/vite"
 
 export default defineConfig({
   server: {
-    host: true,
-    port: 5173,
-  },
+  host: true,
+  port: 5173,
+  proxy: {
+  '/api': {
+    target: 'https://backend.rawatmukul5000.workers.dev',
+    changeOrigin: true,
+    secure: false,
+    rewrite: (path) => path.replace(/^\/api/, '') // ✅ remove /api before sending to backend
+  }
+}
+},
   plugins: [
     tailwindcss(),
     react()
