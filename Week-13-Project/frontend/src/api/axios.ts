@@ -15,7 +15,7 @@ api.interceptors.response.use(
             originalRequest._retry = true;
             try {
                 // 👇 Hit refresh route
-                await api.post("/v1/user/refresh-token");
+                await api.post("/api/v1/user/refresh-token");
 
                 // 👇 Retry original request with refreshed cookie
                 return api(originalRequest);
