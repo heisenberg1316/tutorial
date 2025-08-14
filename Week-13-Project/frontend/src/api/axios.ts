@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // ✅ your backend URL here :-> http://localhost:8787 (DEV)
+  baseURL:  "/api", // ✅ now we use the proxied path or import.meta.env.VITE_API_BASE_URL, your backend URL here :-> http://localhost:8787 (DEV)
   withCredentials: true,                // ✅ send cookies (refresh token)
 });
 
@@ -15,7 +15,7 @@ api.interceptors.response.use(
             originalRequest._retry = true;
             try {
                 // 👇 Hit refresh route
-                await api.post("/api/v1/user/refresh-token");
+                await api.post("/v1/user/refresh-token");
 
                 // 👇 Retry original request with refreshed cookie
                 return api(originalRequest);

@@ -117,7 +117,7 @@ const ProfileHeader = ({type, user, setUser, data, editedProfile, setEditedProfi
                                           }
                                     ) 
                                   }
-                        className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 border border-gray-300 rounded-md px-2 py-1 mb-2"
+                        className="w-full text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 border border-gray-300 rounded-md px-2 py-1 mb-2"
                       />
                     ) : (
                       <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{profileName}</h1>

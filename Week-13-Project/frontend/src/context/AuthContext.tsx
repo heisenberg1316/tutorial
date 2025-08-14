@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchUser = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/api/v1/user/me');
+            const res = await api.get('/v1/user/me');
             setIsLoggedIn(true);
             setUser(res.data.data); // Make sure backend returns data in { data: { id, username, ... } }
         }
