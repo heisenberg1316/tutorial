@@ -15,8 +15,8 @@ const ImageField = ({
   
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
-      if (file && file.size > 1024 * 1024) {
-        alert("Image must be less than 1MB");
+      if (file && file.size > 3 * 1024 * 1024) {
+        alert("Image must be less than 3MB");
         return;
       }
       if (file) {

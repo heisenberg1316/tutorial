@@ -27,8 +27,8 @@ const Signup = () => {
             }
             
             // Validate file size (1MB limit)
-            if (file.size > 1024 * 1024) {
-                alert('Image size should be less than MB');
+            if (file.size > 3 * 1024 * 1024) {
+                alert('Image size should be less than 3MB');
                 return;
             }
 
