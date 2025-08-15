@@ -1,4 +1,4 @@
-# Harkirat Singh Full Stack Course – Practice Repo
+# Web Development – Practice Repo
 
 This repository contains all the assignments, exercises, and practice code from the Full Stack Development course by **Harkirat Singh**.
 
