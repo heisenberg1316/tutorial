@@ -9,7 +9,7 @@ export default function BlogTags({ tags }: BlogTagsProps) {
   console.log("tags is ", tags);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div className="max-w-4xl mx-auto px-2 sm:px-2 py-4 sm:py-6">
       <div className="border-t border-gray-200 pt-4 sm:pt-6">
         <h3 className="text-sm font-medium text-gray-900 mb-3">Tags</h3>
         <div className="flex flex-wrap gap-2">

@@ -10,7 +10,7 @@ import Stickybar from "../components/Stickybar";
 import FilterDrawer from "../components/FilterDrawer";
 import { useFilter } from "../context/FilterContext";
 
-const LIMIT = 9;
+const LIMIT = 6;
 
 const fetchBlogs = async ({ pageParam = null, queryKey }: any) => {
   // queryKey = ['blogs', finalQuery, finalTags]

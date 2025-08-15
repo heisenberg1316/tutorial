@@ -407,7 +407,7 @@ blogRouter.get('/bulk', async (c) => {
     });
 
     const hasMore = blogs.length === limit + 1;
-const nextCursor = hasMore ? blogs[limit - 1].id : null;
+    const nextCursor = hasMore ? blogs[limit - 1].id : null;
 
 
 
@@ -424,47 +424,283 @@ const nextCursor = hasMore ? blogs[limit - 1].id : null;
 });
 
 
-
-
-
-// GET: Get blog by ID
+// GET: Get blog by ID with all comments
 blogRouter.get('/:id', async (c) => {
     try {
-        const id = c.req.param("id");
-        const prisma = getPrisma(c);
-        const userId = c.get("userId")
+      const id = c.req.param("id");
+      const prisma = getPrisma(c);
+      const userId = c.get("userId");
 
-        const blog = await prisma.blog.findFirst({
-            where: { id },
+     const blog = await prisma.blog.findFirst({
+        where: { id },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          imageLink: true,
+          createdAt: true,
+          upvotes: true,
+          tags: { select: { name: true, id: true } },
+          author: { select: { name: true, email: true, imageLink: true } },
+
+          // return ALL comments (you asked for that)
+          comments: {
+            orderBy: { createdAt: 'desc' }, // newest first; use 'asc' for oldest-first
             select: {
-                id: true,
-                title: true,
-                content: true,
-                imageLink: true,
-                createdAt: true,
-                upvotes: true, // pre-calculated count field
-                tags: { select: { name: true, id: true } },
-                author: { select: { name: true, email : true, imageLink: true } },
-                _count: {
-                    select: {
-                        upvotedBy: { where: { id: userId } } // just checking if current user liked
-                    }
-                }
-            }
-        });
+              id: true,
+              content: true,
+              createdAt: true,
+              edited: true,     // <--- include edited flag
+              editedAt: true,   // <--- include edited timestamp
+              likesCount: true,
+              author: { select: { id: true, name: true, email: true, imageLink: true } },
+              // small check whether current user liked this comment (returns [] or [{id}])
+              likedBy: { where: { id: userId }, select: { id: true } }
+            },
+          },
 
-        if(!blog) return c.json({message: "Blog not found" }, 404);
+          // whether current user liked the blog
+          _count: { select: { upvotedBy: { where: { id: userId } } } },
+        },
+      });
 
-        const likedByUser = blog._count.upvotedBy > 0;
-        delete blog?._count;
 
-        return c.json({ blog, likedByUser });
-    }
-    catch (e) {
-        console.error(e);
-        return c.json({ message: "Error while fetching blog post" }, 500);
+      if (!blog) return c.json({ message: "Blog not found" }, 404);
+
+      const likedByUser = blog._count.upvotedBy > 0;
+
+      const allComments = (blog.comments || []).map(c => ({
+        id: c.id,
+        content: c.content,
+        createdAt: c.createdAt,
+        edited: c.edited,
+        editedAt: c.editedAt,
+        likesCount: c.likesCount ?? (c.likedBy?.length || 0),
+        likedByUser: Array.isArray(c.likedBy) && c.likedBy.length > 0,
+        author: c.author,
+      }));
+
+
+      return c.json({
+        blog: {
+          id: blog.id,
+          title: blog.title,
+          content: blog.content,
+          imageLink: blog.imageLink,
+          createdAt: blog.createdAt,
+          upvotes: blog.upvotes,
+          author: blog.author,
+          tags: blog.tags,
+          comments: allComments,
+        },
+        likedByUser,
+      }, 200);
+
+    } catch (e) {
+      console.error(e);
+      return c.json({ message: "Error while fetching blog post" }, 500);
     }
 });
+
+
+
+
+blogRouter.post('/:id/comments', async (c) => {
+    try {
+      const blogId = c.req.param('id');
+      const body = await c.req.json();
+      console.log("bloid is ", blogId);
+      console.log("body is ", body);
+      const content = (body?.content ?? '').toString().trim();
+      if (!content) return c.json({ success: false, error: 'Comment cannot be empty' }, 400);
+
+      const prisma = getPrisma(c);
+      const userId = c.get('userId');
+
+      // ensure blog exists
+      const blog = await prisma.blog.findUnique({ where: { id: blogId }, select: { id: true } });
+      if (!blog) return c.json({ success: false, error: 'Blog not found' }, 404);
+
+      const newComment = await prisma.comment.create({
+        data: {
+          blogId,
+          authorId: userId,
+          content,
+          // likesCount stays default 0
+        },
+        include: {
+          author: { select: { id: true, name: true, imageLink: true, email: true } }
+        }
+      });
+
+      console.log("newcommetn is ", newComment);
+
+      // shape response
+      const shaped = {
+        id: newComment.id,
+        blogId: newComment.blogId,
+        author: newComment.author,
+        content: newComment.content,
+        createdAt: newComment.createdAt,
+        edited: newComment.edited,
+        likesCount: newComment.likesCount ?? 0,
+        likedByUser: false
+      };
+
+      return c.json({ success: true, comment: shaped }, 201);
+    } catch (err) {
+      console.error(err);
+      return c.json({ success: false, error: 'Failed to create comment' }, 500);
+  }
+});
+
+// PUT: Edit a comment
+blogRouter.put('/comments/:commentId', async (c) => {
+  try {
+    const commentId = c.req.param('commentId');
+    const body = await c.req.json();
+    const content = (body?.content ?? '').toString().trim();
+    if (!content) return c.json({ success: false, error: 'Comment cannot be empty' }, 400);
+
+    const prisma = getPrisma(c);
+    const userId = c.get('userId');
+
+    const existing = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!existing) return c.json({ success: false, error: 'Comment not found' }, 404);
+    if (existing.authorId !== userId) return c.json({ success: false, error: 'Unauthorized' }, 403);
+
+    const updated = await prisma.comment.update({
+      where: { id: commentId },
+      data: { content, edited: true, editedAt: new Date() },
+      include: {
+        author: { select: { id: true, name: true, imageLink: true, email: true } },
+        // include likedBy for current-user check (small selection)
+        likedBy: { where: { id: userId }, select: { id: true } },
+      },
+    });
+
+    const shaped = {
+      id: updated.id,
+      blogId: updated.blogId,
+      author: updated.author,
+      content: updated.content,
+      createdAt: updated.createdAt,
+      edited: updated.edited,
+      editedAt: updated.editedAt,
+      likesCount: updated.likesCount ?? (Array.isArray(updated.likedBy) ? updated.likedBy.length : 0),
+      likedByUser: Array.isArray(updated.likedBy) && updated.likedBy.length > 0,
+    };
+
+    return c.json({ success: true, comment: shaped }, 200);
+  } catch (err) {
+    console.error(err);
+    return c.json({ success: false, error: 'Failed to update comment' }, 500);
+  }
+});
+
+
+// DELETE: Delete a comment
+blogRouter.delete('/comments/:commentId', async (c) => {
+  try {
+    const commentId = c.req.param('commentId');
+    const prisma = getPrisma(c);
+    const userId = c.get('userId');
+
+    const existing = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!existing) return c.json({ success: false, error: 'Comment not found' }, 404);
+    if (existing.authorId !== userId) return c.json({ success: false, error: 'Unauthorized' }, 403);
+
+    await prisma.comment.delete({ where: { id: commentId } });
+
+    return c.json({ success: true, message: 'Comment deleted' }, 200);
+  } catch (err) {
+    console.error(err);
+    return c.json({ success: false, error: 'Failed to delete comment' }, 500);
+  }
+});
+
+// POST: Toggle like/unlike on a comment
+blogRouter.post('/comments/:commentId/like', async (c) => {
+  try {
+    const commentId = c.req.param('commentId');
+    const prisma = getPrisma(c);
+    const userId = c.get('userId');
+
+    if (!userId) return c.json({ success: false, error: 'Unauthorized' }, 401);
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1) fetch current membership
+      const current = await tx.comment.findUnique({
+        where: { id: commentId },
+        include: { likedBy: { select: { id: true } } },
+      });
+
+      if (!current) throw new Error('Comment not found');
+
+      const already = current.likedBy.some((u) => u.id === userId);
+
+      // 2) toggle connect/disconnect and adjust likesCount
+      if (already) {
+        await tx.comment.update({
+          where: { id: commentId },
+          data: {
+            likedBy: { disconnect: { id: userId } },
+          },
+        });
+      } else {
+        await tx.comment.update({
+          where: { id: commentId },
+          data: {
+            likedBy: { connect: { id: userId } },
+          },
+        });
+      }
+
+      // 3) re-fetch fresh data and compute authoritative likesCount
+      const fresh = await tx.comment.findUnique({
+        where: { id: commentId },
+        include: { likedBy: { select: { id: true } } },
+      });
+
+      if (!fresh) throw new Error('Comment not found after update');
+
+      const count = fresh.likedBy?.length ?? 0;
+
+      // 4) persist canonical likesCount
+      await tx.comment.update({
+        where: { id: commentId },
+        data: { likesCount: count < 0 ? 0 : count },
+      });
+
+      // final return
+      return {
+        id: commentId,
+        likesCount: count,
+        likedByUser: fresh.likedBy.some((u) => u.id === userId),
+      };
+    });
+
+    return c.json({ success: true, ...result }, 200);
+  } catch (err) {
+    console.error("Toggle comment like error:", err);
+    if (err instanceof Error && err.message === 'Comment not found') {
+      return c.json({ success: false, error: 'Comment not found' }, 404);
+    }
+    return c.json({ success: false, error: 'Failed to toggle like' }, 500);
+  }
+});
+
+
+
+
 
 
 export default blogRouter;

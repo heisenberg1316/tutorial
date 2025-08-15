@@ -1,7 +1,7 @@
 import { useFilter } from "../context/FilterContext";
 
 const tagsList = [
-  "React", "JavaScript", "Web Development", "Cricket", "Sports",
+  "React", "JavaScript", "Web Development", "memes", "Cricket", "netflix", "fictional", "entertainment", "cartoon", "Sports",
   "Analytics", "Education", "Technology", "Learning", "Architecture",
   "Scalability", "World Cup", "Online Learning", "Study Tips"
 ];

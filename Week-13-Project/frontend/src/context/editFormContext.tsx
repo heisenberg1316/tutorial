@@ -1,29 +1,3 @@
-
-//not needed can be use usestate only
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { createContext, useContext, useState } from "react";
 import type { BlogPost} from "../types/types";
 import type { FormContextType } from "../types/contextTypes";

@@ -8,7 +8,7 @@ export default defineConfig({
   port: 5173,
   proxy: {
   '/api': {
-    target: 'https://backend.rawatmukul5000.workers.dev',
+    target: 'http://127.0.0.1:8787',
     changeOrigin: true,
     secure: false,
     rewrite: (path) => path.replace(/^\/api/, '') // ✅ remove /api before sending to backend

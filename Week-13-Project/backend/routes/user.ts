@@ -38,7 +38,7 @@ userRouter.post("/refresh-token", async (c) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 60 * 15,
+      maxAge: 60 * 30,
     });
 
     return c.json({ success: true, message: "Access token refreshed" });
@@ -195,7 +195,7 @@ userRouter.post("/signin", async (c) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 60 * 15,
+      maxAge: 60 * 30,
     });
 
     setCookie(c, "refreshToken", refreshToken, {

@@ -1,9 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,7 +11,6 @@ generator client_edge {
 datasource db {
   provider = "postgresql"
   url      = env("ACCELERATE_URL")
-  
 }
 
 model User {
@@ -30,8 +24,8 @@ model User {
   updatedCount    Int      @default(0)
   lastUpdateDate  DateTime?
   createdAt       DateTime @default(now())
-  
-  // Upvotes relation
+
+  // Upvotes relation (blogs)
   upvotedBlogs    Blog[]   @relation("Upvotes")
 
   // Followers/following
@@ -43,23 +37,28 @@ model User {
   profilesViewed  ProfileView[] @relation("ViewerRelation")     // profiles this user viewed
 
   profileViews    Int      @default(0) // total views count
-}
 
+  // --- comments & comment likes (implicit many-to-many) ---
+  comments        Comment[]     @relation("AuthorComments") // comments authored by user
+  likedComments   Comment[]     @relation("CommentLikes")  // comments this user liked (implicit join table)
+}
 
 model Blog {
   id        String  @id @default(uuid())
   title     String
   content   String
   published Boolean @default(false)
-  upvotes   Int      @default(0)         // new field for upvotes
-  author    User @relation(fields : [authorId], references: [id])
+  upvotes   Int      @default(0)         // upvote count for blog
+  author    User    @relation(fields: [authorId], references: [id])
   authorId  String
-  tags      Tag[]    @relation("BlogTags") // ✅ connect to many tags
+  tags      Tag[]   @relation("BlogTags")
   createdAt DateTime @default(now())
-  imageLink String @default("https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png?20210521171500")
+  imageLink String  @default("https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png?20210521171500")
   upvotedBy User[]  @relation("Upvotes")
-}
 
+  // comments on this blog (top-level only)
+  comments  Comment[]
+}
 
 model Tag {
   id    String  @id @default(uuid())    // unique ID
@@ -78,7 +77,6 @@ model Follower {
   @@unique([followerId, followedId]) // prevent duplicate follows
 }
 
-
 model ProfileView {
   id           String   @id @default(uuid())
 
@@ -89,4 +87,34 @@ model ProfileView {
   viewedUserId String
 
   viewedAt     DateTime @default(now())
+}
+
+/*
+  Comments system (Option A: implicit many-to-many for comment likes)
+  - Comment: top-level comments only (no parentId)
+  - likedComments in User and likedBy in Comment form an implicit join table managed by Prisma
+  - likesCount is denormalized for faster reads; update it transactionally when liking/unliking
+*/
+model Comment {
+  id         String    @id @default(uuid())
+  blog       Blog      @relation(fields: [blogId], references: [id])
+  blogId     String
+
+  author     User      @relation("AuthorComments", fields: [authorId], references: [id])
+  authorId   String
+
+  content    String
+
+  createdAt  DateTime  @default(now()) // full timestamp; format to date-only or relative in UI
+  edited     Boolean   @default(false)
+  editedAt   DateTime?
+
+  // implicit many-to-many: users who liked the comment
+  likedBy    User[]    @relation("CommentLikes")
+
+  // optional denormalized count for faster reads (keep in sync in app logic)
+  likesCount Int       @default(0)
+
+  @@index([blogId])
+  @@index([createdAt])
 }
