@@ -10,6 +10,8 @@
 
 🖼 <b>Image Uploads</b> to make your posts more engaging
 
+💬 <b>Comments Section</b> to share your thoughts
+
 🔍 <b>Search & Filter</b> blogs by title, tags, or category
 
 📱 <b>Responsive Design</b> – works seamlessly on mobile and desktop
