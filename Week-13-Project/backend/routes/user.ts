@@ -464,12 +464,12 @@ userRouter.delete("/delete", async (c) => {
     if (!token2) return c.json({ success: false, error: "Not authenticated" }, 403);
     if (!token1) return c.json({ success: false, error: "Access Token missing" }, 401);
 
-    // 2) Verify tokens (try access first; if expired/invalid try refresh)
+    // 2) Verify tokens
     let userId: string | undefined;
     try {
       const payload = (await verify(token1, c.env.JWT_SECRET)) as any;
       userId = payload?.userId ?? payload?.id;
-    } catch (err) {
+    } catch {
       try {
         const payload2 = (await verify(token2, c.env.JWT_SECRET)) as any;
         userId = payload2?.userId ?? payload2?.id;
@@ -487,8 +487,8 @@ userRouter.delete("/delete", async (c) => {
       select: {
         id: true,
         imageLink: true,
-        blogs: { select: { id: true, imageLink: true } }, // authored
-        upvotedBlogs: { select: { id: true } }, // blogs this user upvoted
+        blogs: { select: { id: true, imageLink: true } },
+        upvotedBlogs: { select: { id: true } },
       },
     });
 
@@ -498,56 +498,58 @@ userRouter.delete("/delete", async (c) => {
     const authoredBlogImageLinks = user.blogs.map((b) => b.imageLink).filter(Boolean) as string[];
     const userImageLink = user.imageLink;
     const upvotedBlogIds = user.upvotedBlogs.map((b) => b.id);
-    
 
-    // 5) Minimal transaction: delete authored blogs, profileView rows, user, remove orphan tags
+    // 4) Transaction: delete authored blogs, profile views, user, orphan tags
     await prisma.$transaction([
-      authoredBlogIds.length > 0
-        ? prisma.blog.deleteMany({ where: { authorId: userId } })
-        : Promise.resolve(),
-      prisma.profileView.deleteMany({ where: { OR: [{ viewerId: userId }, { viewedUserId: userId }] } }),
-      prisma.user.delete({ where: { id: userId } }),
-      prisma.tag.deleteMany({ where: { blogs: { none: {} } } }),
-    ]);
+    // delete comments authored by this user
+    prisma.comment.deleteMany({ where: { authorId: userId } }),
 
-    // --- recompute upvotes (replace existing block) ---
-    const recomputeIds = upvotedBlogIds.filter(id => !authoredBlogIds.includes(id));
+    // delete authored blogs
+    prisma.blog.deleteMany({ where: { authorId: userId } }),
+
+    // delete follower/following relationships
+    prisma.follower.deleteMany({ where: { OR: [{ followerId: userId }, { followedId: userId }] } }),
+
+    // delete profile views (already there)
+    prisma.profileView.deleteMany({ where: { OR: [{ viewerId: userId }, { viewedUserId: userId }] } }),
+
+    // finally delete the user
+    prisma.user.delete({ where: { id: userId } }),
+
+    // cleanup unused tags
+    prisma.tag.deleteMany({ where: { blogs: { none: {} } } }),
+  ]);
+
+
+    // 5) Recompute upvotes
+    const recomputeIds = upvotedBlogIds.filter((id) => !authoredBlogIds.includes(id));
 
     if (recomputeIds.length > 0) {
       await Promise.all(
         recomputeIds.map(async (bid) => {
           try {
-            // get authoritative count of upvotedBy quickly
             const freshCount = await prisma.blog.findUnique({
               where: { id: bid },
               select: { _count: { select: { upvotedBy: true } } },
             });
 
-            // if blog was deleted, freshCount will be null — skip
             if (!freshCount) return;
 
             const count = freshCount._count.upvotedBy ?? 0;
 
-            // update the upvotes field to the authoritative count
             await prisma.blog.update({
               where: { id: bid },
               data: { upvotes: count < 0 ? 0 : count },
             });
           } catch (e: any) {
-            // ignore "record not found" errors (P2025) which can happen if blog
-            // was deleted between checks; log others
-            if (e?.code === "P2025") {
-              // silently skip, expected when blog removed
-              return;
-            }
+            if (e?.code === "P2025") return; // ignore deleted
             console.error(`Recompute upvotes failed for blog ${bid}:`, e);
           }
         })
       );
     }
 
-
-    // 7) Best-effort: delete images from Cloudinary (outside DB transaction)
+    // 6) Delete images from Cloudinary (best-effort, outside DB tx)
     const cloudName = c.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = c.env.CLOUDINARY_API_KEY;
     const apiSecret = c.env.CLOUDINARY_API_SECRET;
@@ -578,7 +580,6 @@ userRouter.delete("/delete", async (c) => {
       })
     );
 
-    // delete user profile image
     if (userImageLink) {
       try {
         const publicId = extractCloudinaryPublicId(userImageLink);
@@ -604,7 +605,7 @@ userRouter.delete("/delete", async (c) => {
       }
     }
 
-    // 8) Clear auth cookies (optional)
+    // 7) Clear auth cookies
     try {
       deleteCookie(c, "accessToken");
       deleteCookie(c, "refreshToken");
@@ -616,6 +617,7 @@ userRouter.delete("/delete", async (c) => {
     return c.json({ success: false, error: "Internal server error" }, 500);
   }
 });
+
 
 
 
