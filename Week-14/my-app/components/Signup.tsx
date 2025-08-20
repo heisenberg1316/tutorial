@@ -7,15 +7,14 @@ import { useState } from "react"
 const Signup = () => {
 
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [details, setDetails] = useState({
     name : "",
-    email : "",
+    password : "",
   });
 
   const submitData = async () => {  
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const response = await axios.post("http://localhost:3000/api/user", {name, email} )
+    const response = await axios.post("http://localhost:3000/api/user", {name, password} )
     console.log("response is ", response);
     setDetails(response.data);
     
@@ -28,16 +27,11 @@ const Signup = () => {
           e.preventDefault();
           submitData();
         }}>
-          <input className="p-2 border-2 rounded-md" required onChange={(e) => setName(e.target.value)} type="text" placeholder="enter your name" value={name}></input>
-          <input className="p-2 border-2 rounded-md"  required onChange={(e) => setEmail(e.target.value)} type="email" placeholder="enter your email" value={email}></input>
+          <input className="p-2 border-2 rounded-md" required onChange={(e) => setName(e.target.value)} type="text" placeholder="enter your username" value={name}></input>
+          <input className="p-2 border-2 rounded-md"  required onChange={(e) => setPassword(e.target.value)} type="password" placeholder="enter your password" value={password}></input>
           <button className="p-2 border-2 rounded-md hover:bg-gray-300 cursor-pointer">submit</button>
         </form>
-        
-        <div>
-          <h1 className="mt-5 font-bold text-2xl">User Details :-{">"}</h1>
-          <p>Name is : {details?.name}</p>
-          <p>Email is : {details?.email}</p>
-        </div>
+      
 
         
     </div>
